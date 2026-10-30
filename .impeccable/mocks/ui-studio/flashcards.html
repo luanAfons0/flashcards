@@ -1,0 +1,830 @@
+<title>flashcards Mock</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one calm column per screen under a thin top bar; the Review centres one Card.
+   World: printed label stock. Ink on cool white, hairline rules, tabular figures in ruled
+   cells. The band colour marks Due, and nothing else. Rank comes from
+   weight and case; the Card text is the one large element. Radii: 4px controls, 6px label
+   and Card, 10px the Popup window. */
+:root {
+  --ground: #f4f6f5;
+  --stock: #ffffff;
+  --sunk: #eceeed;
+  --ink: #14171a;
+  --ink-2: #444c52;
+  --ink-3: #636c72;
+  --rule: #d5dadc;
+  --rule-2: #b9c0c4;
+  --band: #0b6e6e;
+  --band-ink: #ffffff;
+  --danger: #a3261d;
+  --danger-soft: #fbeceb;
+  --press: #e6e9e8;
+  --shadow: 0 1px 2px rgba(20, 30, 32, .06), 0 8px 24px -12px rgba(20, 30, 32, .18);
+  --shadow-win: 0 24px 60px -18px rgba(20, 30, 32, .35), 0 0 0 1px rgba(20, 23, 26, .08);
+  --sans: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue",
+    "Yu Gothic UI", "Meiryo UI", "Hiragino Sans", "Noto Sans CJK JP", sans-serif;
+  --display: "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, Roboto,
+    "Yu Gothic UI", "Meiryo UI", "Hiragino Sans", "Noto Sans CJK JP", sans-serif;
+  --mono: "Cascadia Mono", Consolas, ui-monospace, "SF Mono", Menlo, monospace;
+  --ease: cubic-bezier(.16, 1, .3, 1);
+  --r: 4px;
+  --r-label: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0f1213; --stock: #171b1d; --sunk: #131718; --ink: #e8edef; --ink-2: #b2bcc1;
+    --ink-3: #8b979d; --rule: #283033; --rule-2: #3a4447; --band: #4fc2b6; --band-ink: #062221;
+    --danger: #ff8a7e; --danger-soft: rgba(255, 138, 126, .1);
+    --press: #20262a; --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 28px -12px rgba(0, 0, 0, .6);
+    --shadow-win: 0 28px 70px -20px rgba(0, 0, 0, .8), 0 0 0 1px rgba(255, 255, 255, .07);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #0f1213; --stock: #171b1d; --sunk: #131718; --ink: #e8edef; --ink-2: #b2bcc1;
+  --ink-3: #8b979d; --rule: #283033; --rule-2: #3a4447; --band: #4fc2b6; --band-ink: #062221;
+  --danger: #ff8a7e; --danger-soft: rgba(255, 138, 126, .1);
+  --press: #20262a; --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 28px -12px rgba(0, 0, 0, .6);
+  --shadow-win: 0 28px 70px -20px rgba(0, 0, 0, .8), 0 0 0 1px rgba(255, 255, 255, .07);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { scrollbar-color: var(--rule-2) transparent; }
+body {
+  margin: 0; background: var(--ground); color: var(--ink);
+  font: 15px/1.5 var(--sans); -webkit-font-smoothing: antialiased;
+}
+::selection { background: color-mix(in srgb, var(--ink) 18%, transparent); color: var(--ink); }
+button, input, select, textarea { font: inherit; color: inherit; }
+/* Every surface names its ink, so no text falls back to the browser's black on dark stock. */
+.bar, .sheet, .card, .form, .group, .pcard, .empty, .done-box, .btn, .grades, .seg, .taginput, .chip,
+input, select, textarea, option { color: var(--ink); }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+svg.i { width: 16px; height: 16px; fill: currentColor; flex: none; display: block; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* Mock-only switcher. Dashed, mono and grey on purpose: it is not part of the Plugin Page. */
+.mockbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+  padding-block: 8px; padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: repeating-linear-gradient(135deg, var(--sunk) 0 8px, var(--ground) 8px 16px);
+  border-bottom: 1px dashed var(--rule-2); font: 12px/1.3 var(--mono); color: var(--ink-3);
+}
+.mockbar b { color: var(--ink-2); font-weight: 600; margin-right: 4px; }
+.mockbar .grp { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.mockbar .grp + .grp { padding-left: 10px; border-left: 1px dashed var(--rule-2); }
+.mockbar button, .mockbar select {
+  font: 12px/1 var(--mono); padding: 5px 7px; border-radius: 3px; cursor: pointer;
+  border: 1px dashed var(--rule-2); background: var(--ground); color: var(--ink-2);
+}
+.mockbar button[aria-pressed="true"] { border-style: solid; border-color: var(--ink-2); color: var(--ink); background: var(--stock); }
+
+/* The Plugin Page. */
+.page { min-height: 100%; }
+.bar {
+  display: flex; align-items: center; gap: 20px; height: 52px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--stock); border-bottom: 1px solid var(--rule);
+  transition: opacity .2s var(--ease);
+}
+.mark { font-weight: 700; letter-spacing: -.01em; font-size: 15px; white-space: nowrap; }
+.tabs { display: flex; gap: 2px; height: 100%; }
+.tabs a {
+  display: flex; align-items: center; padding: 0 10px; height: 100%; text-decoration: none;
+  color: var(--ink-3); font-weight: 500; border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+
+.tabs a[aria-current="page"] { color: var(--ink); font-weight: 650; border-bottom-color: var(--ink); }
+.bar .spacer { flex: 1; }
+.page[data-mode="review"] .bar { opacity: .38; }
+.page[data-mode="review"] .bar:hover, .page[data-mode="review"] .bar:focus-within { opacity: 1; }
+
+main { padding-block: 32px 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.col { max-width: 880px; margin: 0 auto; display: grid; gap: 20px; }
+.head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+h1 { font-size: 19px; line-height: 1.25; font-weight: 700; margin: 0; letter-spacing: -.005em; text-wrap: balance; }
+h2 { font-size: 15px; font-weight: 650; margin: 0; }
+p { margin: 0; }
+.quiet { color: var(--ink-3); }
+.small { font-size: 13px; }
+
+/* Buttons. One shape everywhere; ink is primary, the band never fills a button. */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 34px;
+  padding: 0 14px; border-radius: var(--r); border: 1px solid var(--rule-2); background: var(--stock);
+  font-weight: 600; cursor: pointer; white-space: nowrap; text-decoration: none;
+  transition: background .15s var(--ease), transform .1s var(--ease), border-color .15s var(--ease);
+}
+
+.btn:active { transform: scale(.98); }
+.btn[disabled] { cursor: default; color: var(--ink-3); background: var(--sunk); border-color: var(--rule); transform: none; }
+.btn.primary { background: var(--ink); color: var(--stock); border-color: var(--ink); }
+
+.btn.ghost { border-color: transparent; background: transparent; color: var(--ink-2); }
+
+.btn.danger { background: var(--danger); border-color: var(--danger); color: var(--stock); }
+.btn.icon { padding: 0; width: 34px; }
+kbd {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 5px;
+  font: 600 11px/1 var(--mono); color: var(--ink-3); border: 1px solid var(--rule-2); border-bottom-width: 2px;
+  border-radius: 3px; background: var(--stock);
+}
+.btn.primary kbd { background: transparent; color: inherit; border-color: color-mix(in srgb, var(--stock) 40%, transparent); }
+
+/* The label sheet: Decks as ruled rows. */
+.sheet { background: var(--stock); border: 1px solid var(--rule); border-radius: var(--r-label); overflow: hidden; }
+table { width: 100%; border-collapse: collapse; }
+th {
+  font: 600 11px/1 var(--sans); letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3);
+  text-align: left; padding: 12px 16px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap;
+}
+th.n, td.n { text-align: right; width: 84px; border-left: 1px solid var(--rule); }
+/* The band: a printed strip that fills the ruled Due cell, square ended. It marks Due and nothing else. */
+td.n.band { background: var(--band); color: var(--band-ink); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 16px; }
+td { padding: 14px 16px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: 0; }
+.deck-name { font-weight: 650; }
+.deck-meta { font-size: 13px; color: var(--ink-3); margin-top: 2px; }
+.fig { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 15px; }
+.fig.zero { color: var(--ink-3); font-weight: 400; }
+td.acts { width: 1%; white-space: nowrap; text-align: right; padding-right: 10px; }
+td.acts .row-tools { display: inline-flex; gap: 2px; align-items: center; }
+.sheet-foot {
+  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 16px;
+  border-top: 1px solid var(--rule); background: var(--sunk); font-size: 13px; color: var(--ink-3);
+}
+.tag-sample { font: 600 11px/1 var(--mono); letter-spacing: .04em; color: var(--ink-3); border: 1px dashed var(--rule-2); padding: 3px 5px; border-radius: 3px; }
+tr.confirm td { background: var(--danger-soft); padding: 18px 16px; }
+.confirm-box { display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.confirm-box h2 { color: var(--danger); }
+.confirm-box p { color: var(--ink-2); font-size: 14px; margin-top: 2px; }
+.confirm-box .row-tools { display: flex; gap: 8px; }
+
+.empty {
+  background: var(--stock); border: 1px solid var(--rule); border-radius: var(--r-label);
+  padding: 48px 24px; display: grid; gap: 8px; justify-items: start; max-width: 560px;
+}
+.empty h2 { font-size: 17px; }
+.empty p { color: var(--ink-2); max-width: 52ch; }
+.empty .btn { margin-top: 10px; }
+
+/* Review. */
+.review { max-width: 640px; margin: 0 auto; display: grid; gap: 22px; }
+.session { display: grid; gap: 10px; }
+.session-top { display: flex; align-items: center; gap: 12px; justify-content: space-between; }
+.session-top .who { font-weight: 650; }
+.left { font-variant-numeric: tabular-nums; color: var(--ink-2); font-weight: 600; white-space: nowrap; }
+/* The session strip: one fixed slot per Card. A Grade leaves its mark by height, never by colour:
+   Again is a hollow slot (the Card comes back), Hard a low mark, Good a taller one, Easy full. */
+.strip { display: flex; gap: 2px; height: 10px; align-items: flex-end; }
+.strip i { flex: 1; min-width: 2px; height: 3px; border-radius: 1px; background: var(--rule); }
+.strip i.g0 { height: 100%; background: transparent; box-shadow: inset 0 0 0 1px var(--ink-3); }
+.strip i.g1 { height: 40%; background: var(--ink-3); }
+.strip i.g2 { height: 70%; background: var(--ink-3); }
+.strip i.g3 { height: 100%; background: var(--ink-3); }
+.strip i.now { height: 100%; background: var(--ink); }
+
+.stack { position: relative; padding-bottom: 12px; }
+.stack::before, .stack::after {
+  content: ""; position: absolute; left: 50%; bottom: 0; height: 40px; background: var(--stock);
+  border: 1px solid var(--rule); border-radius: var(--r-label); transform: translateX(-50%);
+}
+.stack::before { width: calc(100% - 32px); bottom: 0; opacity: .55; }
+.stack::after { width: calc(100% - 16px); bottom: 6px; opacity: .85; }
+.card {
+  position: relative; z-index: 1; background: var(--stock); border: 1px solid var(--rule); border-radius: var(--r-label);
+  box-shadow: var(--shadow); min-height: 300px; display: grid; grid-template-rows: auto 1fr; overflow: hidden;
+}
+.card-head {
+  display: flex; justify-content: space-between; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--rule);
+  font: 600 11px/1.2 var(--sans); letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3);
+}
+.card-head span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-head span:last-child { flex: none; }
+.card-body { padding: 36px 32px 32px; display: grid; align-content: center; gap: 22px; text-align: center; }
+.front { font: 600 clamp(26px, 5vw, 34px)/1.3 var(--display); letter-spacing: -.01em; text-wrap: balance; overflow-wrap: anywhere; }
+.front.jp { font-size: clamp(40px, 9vw, 56px); font-weight: 500; letter-spacing: .02em; }
+.front.long { font-size: clamp(19px, 3.4vw, 22px); font-weight: 600; line-height: 1.45; }
+.gap { border-bottom: 2px solid var(--ink); padding: 0 .2em; color: var(--ink-2); font-weight: 600; }
+.answer { display: grid; gap: 10px; padding-top: 22px; border-top: 1px solid var(--rule); }
+.answer .main { font-size: 19px; font-weight: 650; }
+.answer .extra { color: var(--ink-2); font-size: 15px; max-width: 46ch; margin: 0 auto; }
+.answer .extra span { display: block; color: var(--ink-3); font-size: 14px; }
+/* No motion in the Review: reveal and Grade are keyboard actions done hundreds of times a day. */
+
+.controls { display: grid; gap: 12px; }
+.reveal { width: 100%; min-height: 48px; font-size: 15px; }
+.grades { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--rule-2); border-radius: var(--r-label); overflow: hidden; background: var(--stock); }
+.grade {
+  display: grid; justify-items: center; gap: 3px; padding: 10px 6px 9px; min-height: 64px; border: 0; background: transparent;
+  cursor: pointer; transition: background .15s var(--ease), transform .1s var(--ease);
+}
+.grade + .grade { border-left: 1px solid var(--rule); }
+.grade:active { background: var(--rule); }
+.grade:focus-visible { outline-offset: -3px; }
+.grade b { font-weight: 650; font-size: 15px; }
+.grade .ivl { font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.grade kbd { margin-top: 2px; }
+.under { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 13px; color: var(--ink-3); }
+.under .btn { min-height: 30px; padding: 0 10px; font-size: 13px; }
+
+.done-box { background: var(--stock); border: 1px solid var(--rule); border-radius: var(--r-label); padding: 40px 32px; display: grid; gap: 10px; text-align: center; justify-items: center; }
+.done-box h2 { font-size: 19px; }
+
+/* Forms. Label above, help below. */
+.field { display: grid; gap: 6px; }
+.field > label, .field > .lbl { font-weight: 600; font-size: 14px; }
+.help { font-size: 13px; color: var(--ink-3); }
+.err { font-size: 13px; color: var(--danger); display: flex; gap: 6px; align-items: flex-start; }
+.err svg.i { width: 15px; height: 15px; margin-top: 2px; }
+input[type="text"], input[type="search"], input[type="number"], select, textarea {
+  width: 100%; min-height: 36px; padding: 7px 10px; border: 1px solid var(--rule-2); border-radius: var(--r);
+  background: var(--stock); color: var(--ink); caret-color: var(--ink);
+}
+input::placeholder, textarea::placeholder { color: var(--ink-3); }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--ink); outline-offset: 0; border-color: var(--ink); }
+textarea { min-height: 96px; resize: vertical; line-height: 1.5; }
+textarea.code { font: 14px/1.6 var(--mono); }
+[aria-invalid="true"] { border-color: var(--danger) !important; }
+.seg { display: inline-grid; grid-auto-flow: column; border: 1px solid var(--rule-2); border-radius: var(--r); overflow: hidden; background: var(--stock); }
+.seg label { position: relative; padding: 7px 12px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--ink-2); white-space: nowrap; }
+.seg label + label { border-left: 1px solid var(--rule); }
+.seg input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.seg label:has(input:checked) { background: var(--ink); color: var(--stock); font-weight: 600; }
+.seg label:has(input:focus-visible) { outline: 2px solid var(--ink); outline-offset: 2px; z-index: 1; }
+
+/* Notes. */
+.tools { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; }
+.search { position: relative; }
+.search svg.i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--ink-3); pointer-events: none; }
+.search input { padding-left: 32px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip {
+  font-size: 13px; padding: 4px 10px; border-radius: 3px; border: 1px solid var(--rule-2); background: var(--stock);
+  color: var(--ink-2); cursor: pointer; font-weight: 500;
+}
+.chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--stock); }
+.notes td { padding: 12px 16px; }
+.notes tbody tr { cursor: pointer; }
+
+.note-first { font-weight: 600; overflow-wrap: anywhere; }
+.note-sub { font-size: 13px; color: var(--ink-3); margin-top: 2px; }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.tag { font-size: 12px; color: var(--ink-2); border: 1px solid var(--rule); border-radius: 3px; padding: 1px 6px; }
+.notes th.when { text-align: right; }
+.notes td.when { white-space: nowrap; font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; text-align: right; }
+
+/* Note editor. */
+.editor { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 28px; align-items: start; }
+.form { display: grid; gap: 20px; background: var(--stock); border: 1px solid var(--rule); border-radius: var(--r-label); padding: 24px; }
+#fields { display: grid; gap: 20px; }
+.row2 { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: end; }
+.form-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 4px; }
+.form-foot .row-tools { display: flex; gap: 8px; }
+.taginput { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 5px 6px; min-height: 36px; border: 1px solid var(--rule-2); border-radius: var(--r); background: var(--stock); }
+.taginput:focus-within { outline: 2px solid var(--ink); border-color: var(--ink); }
+.taginput .tag { display: inline-flex; gap: 4px; align-items: center; font-size: 13px; padding: 2px 4px 2px 8px; }
+.taginput .tag button { border: 0; background: none; padding: 2px; cursor: pointer; color: var(--ink-3); border-radius: 2px; display: grid; }
+.taginput .tag svg.i { width: 12px; height: 12px; }
+.taginput input { border: 0; outline: 0; min-height: 24px; padding: 2px 4px; flex: 1; min-width: 80px; background: transparent; }
+.preview { display: grid; gap: 12px; position: sticky; top: 16px; }
+.preview h2 { font-size: 13px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); }
+.pcard { background: var(--stock); border: 1px solid var(--rule); border-radius: var(--r-label); overflow: hidden; }
+.pcard .ph { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--rule); font-size: 12px; color: var(--ink-3); font-weight: 600; }
+.pcard .pq { padding: 14px 12px 6px; font-weight: 600; text-align: center; overflow-wrap: anywhere; }
+.pcard .pa { padding: 6px 12px 14px; text-align: center; color: var(--ink-2); font-size: 14px; overflow-wrap: anywhere; }
+.pcard .pa::before { content: ""; display: block; height: 1px; background: var(--rule); margin: 0 24% 10px; }
+.preview .help { padding: 0 2px; }
+
+/* Settings. */
+.settings { max-width: 640px; }
+.group { background: var(--stock); border: 1px solid var(--rule); border-radius: var(--r-label); }
+.group > h2 { padding: 14px 20px; border-bottom: 1px solid var(--rule); }
+.setting { display: grid; grid-template-columns: minmax(0, 1fr) 120px; gap: 6px 24px; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--rule); }
+.setting:last-child { border-bottom: 0; }
+.setting label, .setting .lbl { font-weight: 600; }
+.setting .help { grid-column: 1; }
+.setting input { text-align: right; font-variant-numeric: tabular-nums; grid-row: 1 / span 2; grid-column: 2; }
+.setting .fact { grid-column: 2; grid-row: 1 / span 2; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.saved { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: 14px; }
+
+/* Popup frame, shown in the mock as its own small window. */
+.desk { min-height: calc(100vh - 120px); display: grid; place-items: center; gap: 12px; padding-block: 32px; }
+.desk-cap { font: 12px/1.3 var(--mono); color: var(--ink-3); }
+.popup {
+  width: min(420px, 100%); height: 560px; background: var(--ground); border-radius: 10px; box-shadow: var(--shadow-win);
+  display: grid; grid-template-rows: auto auto 1fr auto; overflow: hidden;
+}
+.popup .ptop { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px 8px; font-size: 13px; }
+.popup .ptop .who { font-weight: 650; }
+.popup .strip { margin: 0 14px; height: 6px; }
+.popup .pbody { padding: 14px; display: grid; }
+.popup .card { min-height: 0; height: 100%; box-shadow: none; }
+.popup .card-body { padding: 20px 16px; gap: 14px; }
+.popup .front.jp { font-size: 44px; }
+.popup .answer { padding-top: 14px; }
+.popup .answer .main { font-size: 17px; }
+.popup .answer .extra { font-size: 14px; }
+.popup .pfoot { padding: 0 14px 14px; display: grid; gap: 8px; }
+.popup .grade { min-height: 56px; padding: 8px 4px 7px; }
+.popup .grade b { font-size: 14px; }
+.popup .under { font-size: 12px; }
+
+[data-view] { display: none; }
+[data-view].on { display: block; }
+
+@media (max-width: 860px) {
+  .editor { grid-template-columns: minmax(0, 1fr); }
+  .preview { position: static; }
+}
+@media (max-width: 600px) {
+  .bar { gap: 8px; }
+  .tabs a { padding: 0 8px; }
+  .bar .add-label { display: none; }
+  .bar .add { width: 34px; padding: 0; }
+  main { padding-block: 20px 56px; }
+  td, th { padding-left: 12px; padding-right: 12px; }
+  th.n, td.n { width: 44px; padding-left: 6px; padding-right: 8px; }
+  td.acts { padding-left: 4px; padding-right: 4px; }
+  td.acts .btn.ghost { padding: 0 8px; }
+  .deck-meta .opt { display: none; }
+  td.acts .tool-notes { display: none; }
+  .card-body { padding: 28px 18px 24px; }
+  .form { padding: 18px; }
+  .row2 { grid-template-columns: minmax(0, 1fr); }
+  .setting { grid-template-columns: minmax(0, 1fr) 88px; }
+  .notes .col-type { display: none; }
+  .tools { grid-template-columns: minmax(0, 1fr); }
+  .under .hint { display: none; }
+}
+/* Hover fills only where a pointer can hover, so a tap never leaves one stuck. */
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover { background: var(--press); }
+  .btn.primary:hover { background: var(--ink-2); border-color: var(--ink-2); }
+  .btn.ghost:hover { background: var(--press); color: var(--ink); }
+  .grade:hover { background: var(--press); }
+  .notes tbody tr:hover td { background: var(--sunk); }
+  .tabs a:hover { color: var(--ink); }
+}
+/* Rare state changes fade in; frequent ones never move. */
+tr.confirm td, .saved { transition: opacity .15s var(--ease); @starting-style { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .btn, .btn:active { transform: none !important; transition: background .15s ease; }
+}
+</style>
+
+<svg class="sr" aria-hidden="true">
+  <symbol id="i-plus" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 256 256"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 256 256"><path d="M136,80v43.47l36.12,21.67a8,8,0,0,1-8.24,13.72l-40-24A8,8,0,0,1,120,128V80a8,8,0,0,1,16,0Zm-8-48A95.44,95.44,0,0,0,60.08,60.15C52.81,67.51,46.35,74.59,40,82V64a8,8,0,0,0-16,0v40a8,8,0,0,0,8,8H72a8,8,0,0,0,0-16H49c7.15-8.42,14.27-16.350,22.39-24.57a80,80,0,1,1,1.66,114.75,8,8,0,1,0-11,11.64A96,96,0,1,0,128,32Z"/></symbol>
+  <symbol id="i-back" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"/></symbol>
+  <symbol id="i-notes" viewBox="0 0 256 256"><path d="M229.66,58.34l-32-32a8,8,0,0,0-11.32,0l-96,96A8,8,0,0,0,88,128v32a8,8,0,0,0,8,8h32a8,8,0,0,0,5.66-2.34l96-96A8,8,0,0,0,229.66,58.34ZM124.69,152H104V131.31l64-64L188.69,88ZM200,76.69,179.31,56,192,43.31,212.69,64ZM224,128v80a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V48A16,16,0,0,1,48,32h80a8,8,0,0,1,0,16H48V208H208V128a8,8,0,0,1,16,0Z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm-8-80V80a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,172Z"/></symbol>
+</svg>
+
+<nav class="mockbar" aria-label="Mock screens (not part of the Plugin Page)">
+  <div class="grp"><b>Mock only</b></div>
+  <div class="grp" id="mock-screens">
+    <button type="button" data-go="decks">Decks</button>
+    <button type="button" data-go="decks-empty">No Decks</button>
+    <button type="button" data-go="decks-delete">Delete Deck</button>
+    <button type="button" data-go="review">Review</button>
+    <button type="button" data-go="review-done">Nothing Due</button>
+    <button type="button" data-go="notes">Notes</button>
+    <button type="button" data-go="notes-none">No match</button>
+    <button type="button" data-go="editor">Note editor</button>
+    <button type="button" data-go="editor-error">Editor error</button>
+    <button type="button" data-go="settings">Settings</button>
+    <button type="button" data-go="popup">Popup</button>
+  </div>
+  <div class="grp">
+    <label for="mock-theme">Theme</label>
+    <select id="mock-theme"><option value="">System</option><option value="light">Light</option><option value="dark">Dark</option></select>
+  </div>
+</nav>
+
+<div class="page" id="page">
+  <header class="bar" id="bar">
+    <span class="mark">flashcards</span>
+    <nav class="tabs" aria-label="flashcards">
+      <a href="#decks" data-tab="decks">Decks</a>
+      <a href="#notes" data-tab="notes">Notes</a>
+      <a href="#settings" data-tab="settings">Settings</a>
+    </nav>
+    <span class="spacer"></span>
+    <button type="button" class="btn primary add" data-go="editor" aria-label="Add Note"><svg class="i"><use href="#i-plus"/></svg><span class="add-label">Add Note</span></button>
+  </header>
+
+  <main>
+    <!-- Decks -->
+    <section data-view="decks" aria-labelledby="h-decks">
+      <div class="col">
+        <div class="head">
+          <h1 id="h-decks">Decks</h1>
+          <button type="button" class="btn primary" data-go="review">Study all Due <span class="num">47</span> <kbd>S</kbd></button>
+        </div>
+        <div class="sheet">
+          <table>
+            <caption class="sr">Decks with their New Cards and Due Cards for today</caption>
+            <thead><tr><th scope="col">Deck</th><th scope="col" class="n">New</th><th scope="col" class="n">Due</th><th scope="col"><span class="sr">Actions</span></th></tr></thead>
+            <tbody id="deck-rows"></tbody>
+          </table>
+          <div class="sheet-foot">
+            <span class="num">Today: 13 Reviews and 7 New Cards. Daily Limit: 20 New, 200 Reviews.</span>
+            <span class="tag-sample">sample data</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- No Decks -->
+    <section data-view="decks-empty" aria-labelledby="h-empty">
+      <div class="col">
+        <div class="head"><h1>Decks</h1></div>
+        <div class="empty">
+          <h2 id="h-empty">No Decks yet</h2>
+          <p>A Deck appears when you add its first Note. Other Plugins and the Mate can add Notes too, through the <code>add_note</code> tool.</p>
+          <button type="button" class="btn primary" data-go="editor"><svg class="i"><use href="#i-plus"/></svg>Add Note</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Review -->
+    <section data-view="review" aria-labelledby="h-review">
+      <div class="review" id="review-main"></div>
+    </section>
+
+    <!-- Nothing Due -->
+    <section data-view="review-done" aria-labelledby="h-done">
+      <div class="review">
+        <div class="done-box">
+          <h2 id="h-done">Nothing Due</h2>
+          <p class="quiet num">You did 47 Reviews today. Next Card Due tomorrow at 4:00.</p>
+          <span class="tag-sample">sample data</span>
+          <button type="button" class="btn" data-go="decks"><svg class="i"><use href="#i-back"/></svg>Back to Decks</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Notes -->
+    <section data-view="notes" aria-labelledby="h-notes">
+      <div class="col">
+        <div class="head">
+          <h1 id="h-notes">Notes</h1>
+          <span class="quiet small num" id="notes-count">486 Notes, 6 shown</span>
+        </div>
+        <div class="tools">
+          <div class="field">
+            <label for="note-search">Search Notes</label>
+            <div class="search"><svg class="i"><use href="#i-search"/></svg><input id="note-search" type="search" placeholder="Words in any Field" autocomplete="off"></div>
+          </div>
+          <div class="field">
+            <label for="note-deck">Deck</label>
+            <select id="note-deck"><option>Japanese N4 vocabulary</option><option>AWS Solutions Architect</option><option>Portuguese irregular verbs</option><option>Rust ownership</option></select>
+          </div>
+        </div>
+        <div class="chips" role="group" aria-label="Filter by Tag">
+          <span class="quiet small">Tags</span>
+          <button type="button" class="chip" aria-pressed="false">verb</button>
+          <button type="button" class="chip" aria-pressed="true">lesson-12</button>
+          <button type="button" class="chip" aria-pressed="false">noun</button>
+          <button type="button" class="chip" aria-pressed="false">kanji</button>
+          <button type="button" class="chip" aria-pressed="false">leech</button>
+        </div>
+        <div class="sheet notes" id="notes-sheet">
+          <table>
+            <caption class="sr">Notes in the Deck</caption>
+            <thead><tr><th scope="col">Note</th><th scope="col" class="col-type">Note Type</th><th scope="col">Tags</th><th scope="col" class="when">Next Due</th></tr></thead>
+            <tbody id="note-rows"></tbody>
+          </table>
+          <div class="sheet-foot"><span>Select a Note to edit it.</span><span class="tag-sample">sample data</span></div>
+        </div>
+        <div class="empty" id="notes-none" hidden>
+          <h2>No Notes match “kaisha”</h2>
+          <p>Search looks in every Field and Tag of this Deck. Try fewer words, or another Deck.</p>
+          <button type="button" class="btn" id="clear-search">Clear search</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Note editor -->
+    <section data-view="editor" aria-labelledby="h-editor">
+      <div class="col" style="max-width:1040px">
+        <div class="head">
+          <h1 id="h-editor">Add Note</h1>
+          <span class="quiet small">Ctrl+Enter saves <span class="tag-sample">sample data</span></span>
+        </div>
+        <div class="editor">
+          <form class="form" id="note-form" novalidate>
+            <div class="row2">
+              <div class="field">
+                <label for="ed-deck">Deck</label>
+                <select id="ed-deck"><option>Portuguese irregular verbs</option><option>Japanese N4 vocabulary</option><option>AWS Solutions Architect</option><option>Rust ownership</option></select>
+              </div>
+              <div class="field">
+                <span class="lbl" id="type-lbl">Note Type</span>
+                <div class="seg" role="radiogroup" aria-labelledby="type-lbl">
+                  <label><input type="radio" name="ntype" value="basic">Basic</label>
+                  <label><input type="radio" name="ntype" value="reversed">Basic and reversed</label>
+                  <label><input type="radio" name="ntype" value="cloze" checked>Cloze</label>
+                </div>
+              </div>
+            </div>
+            <div id="fields"></div>
+            <div class="field">
+              <label for="tag-new">Tags</label>
+              <div class="taginput">
+                <span class="tag">verb<button type="button" aria-label="Remove Tag verb"><svg class="i"><use href="#i-x"/></svg></button></span>
+                <span class="tag">past-tense<button type="button" aria-label="Remove Tag past-tense"><svg class="i"><use href="#i-x"/></svg></button></span>
+                <input id="tag-new" type="text" placeholder="Add a Tag" autocomplete="off">
+              </div>
+            </div>
+            <div class="form-foot">
+              <span class="help">Fields take Markdown.</span>
+              <div class="row-tools">
+                <button type="button" class="btn ghost" data-go="notes">Cancel</button>
+                <button type="submit" class="btn primary">Save Note</button>
+              </div>
+            </div>
+          </form>
+          <aside class="preview" aria-labelledby="h-preview">
+            <h2 id="h-preview">Cards this Note makes</h2>
+            <div id="preview-cards" class="preview" style="position:static"></div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section data-view="settings" aria-labelledby="h-settings">
+      <div class="col settings">
+        <div class="head"><h1 id="h-settings">Settings</h1></div>
+        <form class="group" id="settings-form" novalidate>
+          <h2>Daily Limit</h2>
+          <div class="setting">
+            <label for="lim-new">New Cards per day</label>
+            <input id="lim-new" type="number" min="0" max="9999" value="20" inputmode="numeric">
+            <p class="help">The most New Cards one day shows, across all Decks.</p>
+          </div>
+          <div class="setting">
+            <label for="lim-rev">Reviews per day</label>
+            <input id="lim-rev" type="number" min="0" max="9999" value="200" inputmode="numeric">
+            <p class="help">The most Reviews of other Cards one day shows. Cards over the limit wait for the next day.</p>
+          </div>
+          <div class="setting">
+            <span class="lbl">A day starts at</span>
+            <span class="fact">4:00</span>
+            <p class="help">Local time. A Review at 1:00 still counts for the day before.</p>
+          </div>
+          <div class="setting" style="grid-template-columns:1fr auto">
+            <span class="saved" id="saved" hidden><svg class="i"><use href="#i-check"/></svg>Saved</span>
+            <span id="saved-spacer"></span>
+            <button type="submit" class="btn primary" style="grid-column:2;grid-row:1">Save</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Popup -->
+    <section data-view="popup" aria-labelledby="h-popup">
+      <div class="desk">
+        <p class="desk-cap" id="h-popup">Popup, 420 × 560, opened by a Shortcut. It hides when it loses focus.</p>
+        <div class="popup" id="popup"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const ico = (id) => `<svg class="i" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+  /* Sample data, marked as such on every screen that shows it. */
+  const decks = [
+    { name: 'Japanese N4 vocabulary', notes: 486, cards: 960, fresh: 10, due: 34 },
+    { name: 'AWS Solutions Architect', notes: 212, cards: 212, fresh: 5, due: 9 },
+    { name: 'Portuguese irregular verbs', notes: 88, cards: 141, fresh: 0, due: 4 },
+    { name: 'Rust ownership', notes: 41, cards: 58, fresh: 5, due: 0, next: 'Next Card Due tomorrow at 4:00' },
+  ];
+  const queue = [
+    { deck: 'Japanese N4 vocabulary', side: 'Japanese to English', front: '勉強', cls: 'jp', main: 'study', extra: 'べんきょう, benkyō', ex: '毎日日本語を勉強します。 I study Japanese every day.', ivl: ['<1m', '6m', '1d', '3d'] },
+    { deck: 'AWS Solutions Architect', side: 'Basic', front: 'Which S3 storage class costs least for data you read once a year and can wait 12 hours for?', cls: 'long', main: 'S3 Glacier Deep Archive', extra: 'Standard retrieval takes up to 12 hours.', ivl: ['<1m', '2d', '8d', '19d'] },
+    { deck: 'Portuguese irregular verbs', side: 'Cloze 1', front: 'Ontem eu <span class="gap">fazer</span> o jantar.', html: true, main: 'Ontem eu fiz o jantar.', extra: 'fazer, pretérito perfeito, eu', ivl: ['<1m', '10m', '1d', '4d'] },
+    { deck: 'Japanese N4 vocabulary', side: 'English to Japanese', front: 'station', main: '駅', extra: 'えき, eki', ex: '駅まで歩きます。 I walk to the station.', ivl: ['<1m', '6m', '2d', '5d'] },
+  ];
+  const grades = ['Again', 'Hard', 'Good', 'Easy'];
+  const TOTAL = 47;
+
+  /* Decks. */
+  function renderDecks(confirmIndex = -1) {
+    $('#deck-rows').innerHTML = decks.map((d, i) => {
+      if (i === confirmIndex) {
+        return `<tr class="confirm"><td colspan="4"><div class="confirm-box" role="group" aria-labelledby="del-h">
+          <div><h2 id="del-h">Delete ${esc(d.name)}?</h2>
+          <p class="num">This deletes ${d.notes} Notes, ${d.cards} Cards and all their Reviews. You cannot undo it.</p></div>
+          <div class="row-tools"><button type="button" class="btn" data-go="decks" id="keep">Keep the Deck</button>
+          <button type="button" class="btn danger" data-go="decks">${ico('trash')}Delete Deck</button></div></div></td></tr>`;
+      }
+      const due = d.due ? `${d.due}` : `<span class="fig zero">0</span>`;
+      const meta = d.due ? `<span class="num">${d.notes} Notes</span><span class="opt num">, ${d.cards} Cards</span>` : esc(d.next);
+      return `<tr>
+        <td><div class="deck-name">${esc(d.name)}</div><div class="deck-meta">${meta}</div></td>
+        <td class="n"><span class="fig ${d.fresh ? '' : 'zero'}">${d.fresh}</span></td>
+        <td class="n${d.due ? ' band' : ''}">${due}</td>
+        <td class="acts"><div class="row-tools">
+          ${d.due || d.fresh ? `<button type="button" class="btn ghost" data-go="review">Study</button>` : `<button type="button" class="btn ghost" disabled>Study</button>`}
+          <button type="button" class="btn ghost icon tool tool-notes" data-go="notes" aria-label="Notes of ${esc(d.name)}" title="Notes">${ico('notes')}</button>
+          <button type="button" class="btn ghost icon tool" data-del="${i}" aria-label="Delete ${esc(d.name)}" title="Delete Deck">${ico('trash')}</button>
+        </div></td></tr>`;
+    }).join('');
+  }
+
+  /* Review: one Card, its Grades, nothing else. */
+  const rv = { at: 0, shown: false, done: 35, marks: [], history: [] };
+  function strip(n) {
+    let s = '';
+    for (let k = 0; k < n; k++) {
+      const m = rv.marks[k];
+      s += `<i class="${m !== undefined ? 'g' + m : k === rv.marks.length ? 'now' : ''}"></i>`;
+    }
+    return `<div class="strip" aria-hidden="true">${s}</div>`;
+  }
+  function cardHTML(c, shown) {
+    const front = c.html ? c.front : esc(c.front);
+    const ans = shown ? `<div class="answer"><div class="main">${esc(c.main)}</div>
+      <div class="extra">${esc(c.extra)}${c.ex ? `<span>${esc(c.ex)}</span>` : ''}</div></div>` : '';
+    return `<div class="stack"><article class="card" aria-live="polite">
+      <div class="card-head"><span>${esc(c.deck)}</span><span>${esc(c.side)}</span></div>
+      <div class="card-body"><div class="front ${c.cls || ''}">${front}</div>${ans}</div></article></div>`;
+  }
+  function controlsHTML(c, shown, compact) {
+    const main = shown
+      ? `<div class="grades" role="group" aria-label="Grade">${grades.map((g, k) =>
+          `<button type="button" class="grade" data-grade="${k}"><b>${g}</b><span class="ivl">${esc(c.ivl[k])}</span><kbd>${k + 1}</kbd></button>`).join('')}</div>`
+      : `<button type="button" class="btn primary reveal" data-reveal>Show answer <kbd>Space</kbd></button>`;
+    const undo = `<button type="button" class="btn ghost" data-undo ${rv.history.length ? '' : 'disabled'}>${ico('undo')}Undo <kbd>Z</kbd></button>`;
+    const hint = compact ? `<span>Esc closes</span>` : `<span class="hint">Space shows the answer, 1 to 4 give the Grade</span>`;
+    return `<div class="controls">${main}<div class="under">${undo}${hint}<span class="tag-sample">sample data</span></div></div>`;
+  }
+  function renderReview() {
+    const c = queue[rv.at % queue.length];
+    const left = TOTAL - rv.done;
+    $('#review-main').innerHTML = `
+      <div class="session">
+        <div class="session-top">
+          <button type="button" class="btn ghost" data-go="decks" style="margin-left:-10px">${ico('back')}Decks <kbd>Esc</kbd></button>
+          <h1 id="h-review" class="sr">Review</h1>
+          <span class="left num" aria-live="polite">${left} left</span>
+        </div>${strip(TOTAL)}</div>
+      ${cardHTML(c, rv.shown)}${controlsHTML(c, rv.shown, false)}`;
+    $('#popup').innerHTML = `
+      <div class="ptop"><span class="who">flashcards</span><span class="left num">${left} left</span></div>${strip(TOTAL)}
+      <div class="pbody">${cardHTML(c, rv.shown).replace('class="stack"', 'class="stack" style="display:grid"')}</div>
+      <div class="pfoot">${controlsHTML(c, rv.shown, true)}</div>`;
+  }
+  /* Focus lands on Good, the Grade given most; Space never lands on Again by accident. */
+  function reveal() { if (!rv.shown) { rv.shown = true; renderReview(); focusFirst('[data-grade="2"]'); } }
+  function grade(k) {
+    if (!rv.shown) return;
+    rv.history.push({ at: rv.at, done: rv.done, marks: rv.marks.length });
+    rv.marks.push(k);
+    if (k !== 0) rv.done = Math.min(TOTAL, rv.done + 1);
+    rv.at++; rv.shown = false; renderReview(); focusFirst('[data-reveal]');
+  }
+  function undo() {
+    const h = rv.history.pop(); if (!h) return;
+    rv.at = h.at; rv.done = h.done; rv.marks.length = h.marks; rv.shown = true; renderReview();
+  }
+  function focusFirst(sel) { const el = $(`[data-view].on ${sel}`); if (el) el.focus({ preventScroll: true }); }
+  function seedMarks() { const g = '22321220232212322221232202232212232'; rv.marks = [...g].map(Number); rv.done = 35; }
+
+  /* Notes. */
+  const notes = [
+    ['勉強', 'study', 'Basic and reversed', ['noun', 'lesson-12'], 'in 3 d'],
+    ['駅', 'station', 'Basic and reversed', ['noun', 'lesson-12'], 'today'],
+    ['会社', 'company', 'Basic and reversed', ['noun', 'lesson-12'], 'in 12 d'],
+    ['{{c1::行きます}} means to go, polite form.', 'Extra: 行く', 'Cloze', ['verb', 'lesson-12'], 'tomorrow'],
+    ['質問', 'question', 'Basic', ['noun', 'lesson-12', 'leech'], 'today'],
+    ['降ります', 'to get off (a train)', 'Basic and reversed', ['verb', 'lesson-12'], 'in 6 d'],
+  ];
+  function renderNotes() {
+    $('#note-rows').innerHTML = notes.map((n) => `<tr tabindex="0" data-go="editor">
+      <td><div class="note-first">${esc(n[0])}</div><div class="note-sub">${esc(n[1])}</div></td>
+      <td class="col-type quiet small">${esc(n[2])}</td>
+      <td><div class="tags">${n[3].map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div></td>
+      <td class="when">${esc(n[4])}</td></tr>`).join('');
+  }
+
+  /* Note editor: Fields and a live preview of the Cards. */
+  const ed = {
+    cloze: { text: 'Ontem eu {{c1::fiz::fazer}} o jantar e {{c2::pus::pôr}} a mesa.', extra: 'pretérito perfeito, eu' },
+    basic: { front: '勉強', back: 'study\n\nべんきょう, benkyō' },
+  };
+  function renderFields(type, error) {
+    if (type === 'cloze') {
+      const val = error ? 'Ontem eu fiz o jantar e pus a mesa.' : ed.cloze.text;
+      $('#fields').innerHTML = `
+        <div class="field"><label for="f-text">Text</label>
+          <textarea id="f-text" class="code" ${error ? 'aria-invalid="true" aria-describedby="f-text-err"' : 'aria-describedby="f-text-help"'}>${esc(val)}</textarea>
+          ${error ? `<p class="err" id="f-text-err">${ico('warn')}<span>A Cloze Note needs at least one gap, like {{c1::fiz}}. Add one, or pick Basic.</span></p>`
+                  : `<p class="help" id="f-text-help">Mark each gap as {{c1::answer}}. Add a hint after a second ::, as in {{c1::fiz::fazer}}. Gaps with the same number hide together.</p>`}</div>
+        <div class="field"><label for="f-extra">Extra</label><textarea id="f-extra" style="min-height:64px">${esc(ed.cloze.extra)}</textarea>
+          <p class="help">Shown under the answer on every Card.</p></div>`;
+    } else {
+      $('#fields').innerHTML = `
+        <div class="field"><label for="f-front">Front</label><textarea id="f-front">${esc(ed.basic.front)}</textarea></div>
+        <div class="field"><label for="f-back">Back</label><textarea id="f-back">${esc(ed.basic.back)}</textarea></div>`;
+    }
+    $$('#fields textarea').forEach((t) => t.addEventListener('input', () => renderPreview(type)));
+    renderPreview(type, error);
+  }
+  function renderPreview(type, error) {
+    const out = [];
+    if (type === 'cloze') {
+      const text = ($('#f-text') || {}).value || '';
+      const extra = ($('#f-extra') || {}).value || '';
+      const re = /\{\{c(\d+)::(.*?)(?:::(.*?))?\}\}/g;
+      const nums = [...new Set([...text.matchAll(re)].map((m) => m[1]))].sort((a, b) => a - b);
+      for (const n of nums) {
+        const q = esc(text).replace(/\{\{c(\d+)::(.*?)(?:::(.*?))?\}\}/g, (_, k, a, h) => (k === n ? `<span class="gap">${h || '...'}</span>` : a));
+        const a = esc(text).replace(/\{\{c(\d+)::(.*?)(?:::(.*?))?\}\}/g, (_, k, ans) => (k === n ? `<strong>${ans}</strong>` : ans));
+        out.push({ h: `Card ${out.length + 1}`, t: `Cloze ${n}`, q, a: a + (extra ? `<br><span class="quiet">${esc(extra)}</span>` : '') });
+      }
+    } else {
+      const f = esc(($('#f-front') || {}).value || ''), b = esc(($('#f-back') || {}).value || '').replace(/\n+/g, '<br>');
+      out.push({ h: 'Card 1', t: 'Front to Back', q: f, a: b });
+      if (type === 'reversed') out.push({ h: 'Card 2', t: 'Back to Front', q: b, a: f });
+    }
+    const help = out.length
+      ? `<p class="help num">${out.length === 1 ? 'This Note makes 1 Card.' : `This Note makes ${out.length} Cards. Each one has its own schedule.`}</p>`
+      : `<p class="help">${error ? 'No gap, so no Card yet.' : 'Write the Fields to see the Cards.'}</p>`;
+    $('#preview-cards').innerHTML = out.map((c) => `<div class="pcard"><div class="ph"><span>${c.h}</span><span>${c.t}</span></div>
+      <div class="pq">${c.q}</div><div class="pa">${c.a}</div></div>`).join('') + help;
+  }
+
+  /* Screen switching. Hash routes for the three tabs; the mock bar reaches every state. */
+  const tabOf = { decks: 'decks', 'decks-empty': 'decks', 'decks-delete': 'decks', review: '', 'review-done': '', notes: 'notes', 'notes-none': 'notes', editor: 'notes', 'editor-error': 'notes', settings: 'settings', popup: '' };
+  function go(state) {
+    const view = state.replace(/-(delete|none|error)$/, '');
+    $$('[data-view]').forEach((s) => s.classList.toggle('on', s.dataset.view === view));
+    $('#page').dataset.mode = view === 'review' ? 'review' : '';
+    $('#bar').hidden = view === 'popup';
+    $$('[data-tab]').forEach((a) => a.dataset.tab === tabOf[state] ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
+    $$('#mock-screens button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.go === state)));
+    if (view === 'decks') { renderDecks(state === 'decks-delete' ? 0 : -1); if (state === 'decks-delete') focusFirst('#keep'); }
+    if (view === 'review' || view === 'popup') { if (!rv.history.length) seedMarks(); renderReview(); }
+    if (view === 'notes') { const none = state === 'notes-none'; $('#notes-sheet').hidden = none; $('#notes-none').hidden = !none; $('#note-search').value = none ? 'kaisha' : ''; $('#notes-count').textContent = none ? '486 Notes, 0 shown' : '486 Notes, 6 shown'; }
+    if (view === 'editor') { const err = state === 'editor-error'; $('input[name="ntype"][value="cloze"]').checked = true; renderFields('cloze', err); }
+    if (view === 'settings') $('#saved').hidden = true;
+    current = state;
+  }
+  let current = 'decks';
+
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-go],[data-del],[data-reveal],[data-grade],[data-undo],.chip,#clear-search,.taginput .tag button');
+    if (!t) return;
+    if (t.matches('.chip')) { t.setAttribute('aria-pressed', String(t.getAttribute('aria-pressed') !== 'true')); return; }
+    if (t.id === 'clear-search') { go('notes'); return; }
+    if (t.matches('.taginput .tag button')) { t.parentElement.remove(); return; }
+    if (t.hasAttribute('data-del')) { renderDecks(Number(t.dataset.del)); focusFirst('#keep'); return; }
+    if (t.hasAttribute('data-reveal')) return reveal();
+    if (t.hasAttribute('data-grade')) return grade(Number(t.dataset.grade));
+    if (t.hasAttribute('data-undo')) return undo();
+    if (t.dataset.go) { e.preventDefault(); go(t.dataset.go); }
+  });
+  $$('[data-tab]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); go(a.dataset.tab); }));
+  document.addEventListener('keydown', (e) => {
+    if (e.target.closest('input, textarea, select')) {
+      if (e.key === 'Enter' && e.ctrlKey && current.startsWith('editor')) { e.preventDefault(); go('notes'); }
+      return;
+    }
+    if (e.key === 'Enter' && e.target.matches('#note-rows tr')) { go('editor'); return; }
+    const inReview = current === 'review' || current === 'popup';
+    if (!inReview) { if (e.key.toLowerCase() === 's' && current === 'decks') go('review'); return; }
+    if (e.key === ' ' && !rv.shown) { e.preventDefault(); reveal(); }
+    else if (/^[1-4]$/.test(e.key)) { e.preventDefault(); grade(Number(e.key) - 1); }
+    else if (e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
+    else if (e.key === 'Escape') { e.preventDefault(); go('decks'); }
+  });
+  document.addEventListener('change', (e) => {
+    if (e.target.name === 'ntype') renderFields(e.target.value, false);
+    if (e.target.id === 'mock-theme') { try { e.target.value ? document.documentElement.setAttribute('data-theme', e.target.value) : document.documentElement.removeAttribute('data-theme'); } catch (_) {} }
+  });
+  $('#settings-form').addEventListener('submit', (e) => { e.preventDefault(); $('#saved').hidden = false; });
+  $('#note-form').addEventListener('submit', (e) => { e.preventDefault(); go('notes'); });
+
+  renderNotes();
+  go(['decks', 'notes', 'settings'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'decks');
+})();
+</script>

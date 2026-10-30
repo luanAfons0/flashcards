@@ -1,0 +1,635 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-29T00:00:00Z",
+  "title": "Design System: flashcards",
+  "extensions": {
+    "colorMeta": {
+      "band": {
+        "role": "primary",
+        "displayName": "Dispensing Teal",
+        "canonical": "#0b6e6e",
+        "tonalRamp": [
+          "#000f0f",
+          "#042b2b",
+          "#114b4b",
+          "#206e6e",
+          "#479090",
+          "#7ab1b0",
+          "#aad2d1",
+          "#dbf5f4"
+        ]
+      },
+      "band-ink": {
+        "role": "primary",
+        "displayName": "Band Ink",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Label Ink",
+        "canonical": "#14171a",
+        "tonalRamp": [
+          "#090b0e",
+          "#222529",
+          "#3f4246",
+          "#5e6265",
+          "#7f8387",
+          "#a1a5aa",
+          "#c5cace",
+          "#ebeff3"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Second Ink",
+        "canonical": "#444c52",
+        "tonalRamp": [
+          "#060c11",
+          "#1f262b",
+          "#3b4349",
+          "#5a6269",
+          "#7b848a",
+          "#9da6ad",
+          "#c1cbd2",
+          "#e6f0f7"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Faint Ink",
+        "canonical": "#636c72",
+        "tonalRamp": [
+          "#060c11",
+          "#1f262b",
+          "#3b4349",
+          "#5a6369",
+          "#7b848a",
+          "#9da7ad",
+          "#c1cbd2",
+          "#e6f0f7"
+        ]
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "Cool Ground",
+        "canonical": "#f4f6f5",
+        "tonalRamp": [
+          "#0a0b0b",
+          "#242525",
+          "#414242",
+          "#606261",
+          "#818382",
+          "#a4a5a4",
+          "#c8cac9",
+          "#edefee"
+        ]
+      },
+      "stock": {
+        "role": "neutral",
+        "displayName": "Label Stock",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "sunk": {
+        "role": "neutral",
+        "displayName": "Sunk Stock",
+        "canonical": "#eceeed",
+        "tonalRamp": [
+          "#0a0b0b",
+          "#242525",
+          "#414242",
+          "#606261",
+          "#818382",
+          "#a4a5a4",
+          "#c8cac9",
+          "#edefee"
+        ]
+      },
+      "press": {
+        "role": "neutral",
+        "displayName": "Press",
+        "canonical": "#e6e9e8",
+        "tonalRamp": [
+          "#0a0c0b",
+          "#232625",
+          "#404342",
+          "#5f6261",
+          "#808382",
+          "#a3a6a5",
+          "#c7cac9",
+          "#ecefee"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#d5dadc",
+        "tonalRamp": [
+          "#090c0d",
+          "#222627",
+          "#3f4344",
+          "#5e6264",
+          "#7f8385",
+          "#a1a6a8",
+          "#c5cacc",
+          "#eaeff1"
+        ]
+      },
+      "rule-2": {
+        "role": "neutral",
+        "displayName": "Firm Rule",
+        "canonical": "#b9c0c4",
+        "tonalRamp": [
+          "#070c0f",
+          "#212629",
+          "#3d4346",
+          "#5c6266",
+          "#7d8387",
+          "#9fa6aa",
+          "#c3cace",
+          "#e8f0f4"
+        ]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Alarm Red",
+        "canonical": "#a3261d",
+        "tonalRamp": [
+          "#1d0201",
+          "#460e0a",
+          "#73221a",
+          "#a4362c",
+          "#cb5a4c",
+          "#e5887a",
+          "#fcb5a9",
+          "#ffe2da"
+        ]
+      },
+      "danger-soft": {
+        "role": "tertiary",
+        "displayName": "Alarm Wash",
+        "canonical": "#fbeceb",
+        "tonalRamp": [
+          "#110808",
+          "#2d2221",
+          "#4a3f3e",
+          "#6a5e5d",
+          "#8c7f7e",
+          "#afa1a0",
+          "#d4c5c4",
+          "#f9eae9"
+        ]
+      },
+      "band-dark": {
+        "role": "primary",
+        "displayName": "Dispensing Teal (dark)",
+        "canonical": "#4fc2b6",
+        "tonalRamp": [
+          "#00100d",
+          "#002d29",
+          "#004e48",
+          "#007269",
+          "#2a958a",
+          "#6bb5ac",
+          "#a1d5ce",
+          "#d6f7f2"
+        ]
+      },
+      "band-ink-dark": {
+        "role": "primary",
+        "displayName": "Band Ink (dark)",
+        "canonical": "#062221",
+        "tonalRamp": [
+          "#060d0c",
+          "#1b2827",
+          "#334645",
+          "#4e6765",
+          "#6e8887",
+          "#95aaa9",
+          "#bdcdcc",
+          "#e7f1f0"
+        ]
+      },
+      "ink-dark": {
+        "role": "neutral",
+        "displayName": "Label Ink (dark)",
+        "canonical": "#e8edef",
+        "tonalRamp": [
+          "#090c0d",
+          "#222627",
+          "#3f4344",
+          "#5e6264",
+          "#7f8385",
+          "#a1a6a8",
+          "#c5cacc",
+          "#eaeff1"
+        ]
+      },
+      "ink-2-dark": {
+        "role": "neutral",
+        "displayName": "Second Ink (dark)",
+        "canonical": "#b2bcc1",
+        "tonalRamp": [
+          "#060c10",
+          "#1f262a",
+          "#3b4348",
+          "#5a6367",
+          "#7b8489",
+          "#9da7ac",
+          "#c1cbd0",
+          "#e6f0f6"
+        ]
+      },
+      "ink-3-dark": {
+        "role": "neutral",
+        "displayName": "Faint Ink (dark)",
+        "canonical": "#8b979d",
+        "tonalRamp": [
+          "#050d11",
+          "#1d272b",
+          "#394449",
+          "#586369",
+          "#79848a",
+          "#9ba7ad",
+          "#bfcbd2",
+          "#e4f1f7"
+        ]
+      },
+      "ground-dark": {
+        "role": "neutral",
+        "displayName": "Cool Ground (dark)",
+        "canonical": "#0f1213",
+        "tonalRamp": [
+          "#090c0d",
+          "#222627",
+          "#3f4344",
+          "#5e6263",
+          "#7f8384",
+          "#a2a6a7",
+          "#c6cacb",
+          "#ebeff1"
+        ]
+      },
+      "stock-dark": {
+        "role": "neutral",
+        "displayName": "Label Stock (dark)",
+        "canonical": "#171b1d",
+        "tonalRamp": [
+          "#080c0e",
+          "#222628",
+          "#3e4345",
+          "#5d6264",
+          "#7e8386",
+          "#a1a6a9",
+          "#c5cacd",
+          "#eaeff2"
+        ]
+      },
+      "sunk-dark": {
+        "role": "neutral",
+        "displayName": "Sunk Stock (dark)",
+        "canonical": "#131718",
+        "tonalRamp": [
+          "#080c0d",
+          "#222627",
+          "#3e4344",
+          "#5d6263",
+          "#7e8385",
+          "#a1a6a7",
+          "#c5cacc",
+          "#eaf0f1"
+        ]
+      },
+      "press-dark": {
+        "role": "neutral",
+        "displayName": "Press (dark)",
+        "canonical": "#20262a",
+        "tonalRamp": [
+          "#070c0f",
+          "#20262a",
+          "#3d4347",
+          "#5b6267",
+          "#7c8388",
+          "#9fa6ab",
+          "#c3cad0",
+          "#e8f0f5"
+        ]
+      },
+      "rule-dark": {
+        "role": "neutral",
+        "displayName": "Hairline (dark)",
+        "canonical": "#283033",
+        "tonalRamp": [
+          "#060c0f",
+          "#1f2629",
+          "#3b4447",
+          "#5a6366",
+          "#7b8488",
+          "#9da7ab",
+          "#c1cbcf",
+          "#e6f1f4"
+        ]
+      },
+      "rule-2-dark": {
+        "role": "neutral",
+        "displayName": "Firm Rule (dark)",
+        "canonical": "#3a4447",
+        "tonalRamp": [
+          "#050d0f",
+          "#1e272a",
+          "#3a4447",
+          "#596367",
+          "#798588",
+          "#9ca7ab",
+          "#c0cccf",
+          "#e5f1f5"
+        ]
+      },
+      "danger-dark": {
+        "role": "tertiary",
+        "displayName": "Alarm Red (dark)",
+        "canonical": "#ff8a7e",
+        "tonalRamp": [
+          "#1b0302",
+          "#43120f",
+          "#6f2722",
+          "#9e3d36",
+          "#c46056",
+          "#de8b82",
+          "#f7b7af",
+          "#ffe3dd"
+        ]
+      },
+      "danger-soft-dark": {
+        "role": "tertiary",
+        "displayName": "Alarm Wash (dark)",
+        "canonical": "rgba(255, 138, 126, .1)",
+        "tonalRamp": [
+          "#1b0302",
+          "#43120f",
+          "#6f2722",
+          "#9e3d36",
+          "#c46056",
+          "#de8b82",
+          "#f7b7af",
+          "#ffe3dd"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Card Front",
+        "purpose": "The Card front in a Review; the only large type."
+      },
+      "display-cjk": {
+        "displayName": "Card Front, CJK",
+        "purpose": "Short Japanese fronts."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page headings and the Nothing Due heading."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Deck names, group headings, Grade names, the current tab."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running text."
+      },
+      "body-small": {
+        "displayName": "Small",
+        "purpose": "Meta lines, help, intervals, sheet footers."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Tabular counts in ruled cells."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase column headers and the Card head."
+      },
+      "key": {
+        "displayName": "Key",
+        "purpose": "Key caps."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card-lift",
+        "value": "0 1px 2px rgba(20, 30, 32, .06), 0 8px 24px -12px rgba(20, 30, 32, .18)",
+        "purpose": "The Review Card on the Plugin Page."
+      },
+      {
+        "name": "card-lift-dark",
+        "value": "0 1px 2px rgba(0, 0, 0, .4), 0 10px 28px -12px rgba(0, 0, 0, .6)",
+        "purpose": "The Review Card, dark theme."
+      },
+      {
+        "name": "window",
+        "value": "0 24px 60px -18px rgba(20, 30, 32, .35), 0 0 0 1px rgba(20, 23, 26, .08)",
+        "purpose": "The Popup window."
+      },
+      {
+        "name": "window-dark",
+        "value": "0 28px 70px -20px rgba(0, 0, 0, .8), 0 0 0 1px rgba(255, 255, 255, .07)",
+        "purpose": "The Popup window, dark theme."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "Hover fills (0.15s) and button press (0.1s); never in the Review flow."
+      },
+      {
+        "name": "fade-rare",
+        "value": "opacity .15s cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "Rare state changes only: the delete confirm row and Saved."
+      },
+      {
+        "name": "chrome-fade",
+        "value": "opacity .2s cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "Top bar dropping to 38% during a Review."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact",
+        "value": "600px"
+      },
+      {
+        "name": "editor-stack",
+        "value": "860px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one main action of a region, filled with ink, with its key cap.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">Study all Due <span style=\"font-variant-numeric:tabular-nums\">47</span> <kbd class=\"ds-kbd\">S</kbd></button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:34px;padding:0 14px;border-radius:4px;border:1px solid #b9c0c4;background:#ffffff;color:#14171a;font:600 15px/1.5 \"Segoe UI Variable Text\",\"Segoe UI\",system-ui,-apple-system,Roboto,sans-serif;cursor:pointer;transition:background .15s cubic-bezier(.16,1,.3,1),transform .1s cubic-bezier(.16,1,.3,1)}.ds-btn:active{transform:scale(.98)}.ds-btn:focus-visible{outline:2px solid #14171a;outline-offset:2px}.ds-kbd{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;font:600 11px/1 \"Cascadia Mono\",Consolas,ui-monospace,monospace;color:#636c72;border:1px solid #b9c0c4;border-bottom-width:2px;border-radius:3px;background:#ffffff}.ds-btn-primary{background:#14171a;color:#ffffff;border-color:#14171a}.ds-btn-primary:hover{background:#444c52;border-color:#444c52}.ds-btn-primary .ds-kbd{background:transparent;color:inherit;border-color:rgba(255,255,255,.4)}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "A plain stock button with a firm rule, for the non-destructive choice.",
+      "html": "<button class=\"ds-btn\">Keep the Deck</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:34px;padding:0 14px;border-radius:4px;border:1px solid #b9c0c4;background:#ffffff;color:#14171a;font:600 15px/1.5 \"Segoe UI Variable Text\",\"Segoe UI\",system-ui,-apple-system,Roboto,sans-serif;cursor:pointer;transition:background .15s cubic-bezier(.16,1,.3,1),transform .1s cubic-bezier(.16,1,.3,1)}.ds-btn:active{transform:scale(.98)}.ds-btn:focus-visible{outline:2px solid #14171a;outline-offset:2px}.ds-kbd{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;font:600 11px/1 \"Cascadia Mono\",Consolas,ui-monospace,monospace;color:#636c72;border:1px solid #b9c0c4;border-bottom-width:2px;border-radius:3px;background:#ffffff}.ds-btn:hover{background:#e6e9e8}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Row actions, Undo and Back; no border until hover.",
+      "html": "<button class=\"ds-btn ds-btn-ghost\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 256 256\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z\"/></svg>Decks <kbd class=\"ds-kbd\">Esc</kbd></button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:34px;padding:0 14px;border-radius:4px;border:1px solid #b9c0c4;background:#ffffff;color:#14171a;font:600 15px/1.5 \"Segoe UI Variable Text\",\"Segoe UI\",system-ui,-apple-system,Roboto,sans-serif;cursor:pointer;transition:background .15s cubic-bezier(.16,1,.3,1),transform .1s cubic-bezier(.16,1,.3,1)}.ds-btn:active{transform:scale(.98)}.ds-btn:focus-visible{outline:2px solid #14171a;outline-offset:2px}.ds-kbd{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;font:600 11px/1 \"Cascadia Mono\",Consolas,ui-monospace,monospace;color:#636c72;border:1px solid #b9c0c4;border-bottom-width:2px;border-radius:3px;background:#ffffff}.ds-btn-ghost{border-color:transparent;background:transparent;color:#444c52}.ds-btn-ghost:hover{background:#e6e9e8;color:#14171a}"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Only the confirm of Delete Deck.",
+      "html": "<button class=\"ds-btn ds-btn-danger\">Delete Deck</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:34px;padding:0 14px;border-radius:4px;border:1px solid #b9c0c4;background:#ffffff;color:#14171a;font:600 15px/1.5 \"Segoe UI Variable Text\",\"Segoe UI\",system-ui,-apple-system,Roboto,sans-serif;cursor:pointer;transition:background .15s cubic-bezier(.16,1,.3,1),transform .1s cubic-bezier(.16,1,.3,1)}.ds-btn:active{transform:scale(.98)}.ds-btn:focus-visible{outline:2px solid #14171a;outline-offset:2px}.ds-kbd{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;font:600 11px/1 \"Cascadia Mono\",Consolas,ui-monospace,monospace;color:#636c72;border:1px solid #b9c0c4;border-bottom-width:2px;border-radius:3px;background:#ffffff}.ds-btn-danger{background:#a3261d;border-color:#a3261d;color:#ffffff}"
+    },
+    {
+      "name": "Deck Sheet Row",
+      "kind": "custom",
+      "refersTo": "due-cell",
+      "description": "A ruled label row: Deck name, New and Due in fixed cells, the band only on Due.",
+      "html": "<table class=\"ds-sheet\"><thead><tr><th>Deck</th><th class=\"ds-n\">New</th><th class=\"ds-n\">Due</th></tr></thead><tbody><tr><td><div class=\"ds-name\">Japanese N4 vocabulary</div><div class=\"ds-meta\">486 Notes, 960 Cards</div></td><td class=\"ds-n\"><span class=\"ds-fig\">10</span></td><td class=\"ds-n ds-band\">34</td></tr><tr><td><div class=\"ds-name\">Rust ownership</div><div class=\"ds-meta\">Next Card Due tomorrow at 4:00</div></td><td class=\"ds-n\"><span class=\"ds-fig\">5</span></td><td class=\"ds-n\"><span class=\"ds-fig ds-zero\">0</span></td></tr></tbody></table>",
+      "css": ".ds-sheet{width:100%;border-collapse:collapse;background:#ffffff;border:1px solid #d5dadc;font:15px/1.5 \"Segoe UI Variable Text\",\"Segoe UI\",system-ui,-apple-system,Roboto,sans-serif;color:#14171a}.ds-sheet th{font:600 11px/1 \"Segoe UI Variable Text\",\"Segoe UI\",system-ui,-apple-system,Roboto,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:#636c72;text-align:left;padding:12px 16px 10px;border-bottom:1px solid #d5dadc}.ds-sheet td{padding:14px 16px;border-bottom:1px solid #d5dadc}.ds-sheet .ds-n{text-align:right;width:84px;border-left:1px solid #d5dadc}.ds-band{background:#0b6e6e;color:#ffffff;font-weight:700;font-size:16px;font-variant-numeric:tabular-nums}.ds-name{font-weight:650}.ds-meta{font-size:13px;color:#636c72;margin-top:2px}.ds-fig{font-variant-numeric:tabular-nums;font-weight:600}.ds-zero{color:#636c72;font-weight:400}"
+    },
+    {
+      "name": "Grade Row",
+      "kind": "custom",
+      "refersTo": "grade",
+      "description": "Four colourless Grade cells with next interval and key.",
+      "html": "<div class=\"ds-grades\"><button class=\"ds-grade\"><b>Again</b><span><1m</span><kbd class=\"ds-kbd\">1</kbd></button><button class=\"ds-grade\"><b>Hard</b><span>6m</span><kbd class=\"ds-kbd\">2</kbd></button><button class=\"ds-grade\"><b>Good</b><span>1d</span><kbd class=\"ds-kbd\">3</kbd></button><button class=\"ds-grade\"><b>Easy</b><span>3d</span><kbd class=\"ds-kbd\">4</kbd></button></div>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:34px;padding:0 14px;border-radius:4px;border:1px solid #b9c0c4;background:#ffffff;color:#14171a;font:600 15px/1.5 \"Segoe UI Variable Text\",\"Segoe UI\",system-ui,-apple-system,Roboto,sans-serif;cursor:pointer;transition:background .15s cubic-bezier(.16,1,.3,1),transform .1s cubic-bezier(.16,1,.3,1)}.ds-btn:active{transform:scale(.98)}.ds-btn:focus-visible{outline:2px solid #14171a;outline-offset:2px}.ds-kbd{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;font:600 11px/1 \"Cascadia Mono\",Consolas,ui-monospace,monospace;color:#636c72;border:1px solid #b9c0c4;border-bottom-width:2px;border-radius:3px;background:#ffffff}.ds-grades{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid #b9c0c4;border-radius:6px;overflow:hidden;background:#ffffff}.ds-grade{display:grid;justify-items:center;gap:3px;padding:10px 6px 9px;min-height:64px;border:0;background:transparent;color:#14171a;font:15px/1.5 \"Segoe UI Variable Text\",\"Segoe UI\",system-ui,-apple-system,Roboto,sans-serif;cursor:pointer}.ds-grade+.ds-grade{border-left:1px solid #d5dadc}.ds-grade b{font-weight:650}.ds-grade span{font-size:13px;color:#636c72;font-variant-numeric:tabular-nums}.ds-grade:hover{background:#e6e9e8}.ds-grade:active{background:#d5dadc}.ds-grade:focus-visible{outline:2px solid #14171a;outline-offset:-3px}"
+    },
+    {
+      "name": "Session Strip",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "One fixed slot per Card; a Grade leaves its mark by height, never colour.",
+      "html": "<div class=\"ds-strip\"><i class=\"g2\"></i><i class=\"g2\"></i><i class=\"g3\"></i><i class=\"g1\"></i><i class=\"g0\"></i><i class=\"g2\"></i><i class=\"now\"></i><i></i><i></i><i></i></div>",
+      "css": ".ds-strip{display:flex;gap:2px;height:10px;align-items:flex-end;width:240px}.ds-strip i{flex:1;min-width:2px;height:3px;border-radius:1px;background:#d5dadc}.ds-strip .g0{height:100%;background:transparent;box-shadow:inset 0 0 0 1px #636c72}.ds-strip .g1{height:40%;background:#636c72}.ds-strip .g2{height:70%;background:#636c72}.ds-strip .g3{height:100%;background:#636c72}.ds-strip .now{height:100%;background:#14171a}"
+    },
+    {
+      "name": "Tag Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Filter Notes by Tag; pressed fills with ink.",
+      "html": "<button class=\"ds-chip\" aria-pressed=\"false\">verb</button> <button class=\"ds-chip\" aria-pressed=\"true\">lesson-12</button>",
+      "css": ".ds-chip{font:500 13px/1.5 \"Segoe UI Variable Text\",\"Segoe UI\",system-ui,-apple-system,Roboto,sans-serif;padding:4px 10px;border-radius:3px;border:1px solid #b9c0c4;background:#ffffff;color:#444c52;cursor:pointer}.ds-chip[aria-pressed=true]{background:#14171a;border-color:#14171a;color:#ffffff}.ds-chip:focus-visible{outline:2px solid #14171a;outline-offset:2px}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Label above, help below, ink focus.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-lbl\">Search Notes</span><input class=\"ds-input\" type=\"search\" placeholder=\"Words in any Field\"><span class=\"ds-help\">Search looks in every Field and Tag.</span></label>",
+      "css": ".ds-field{display:grid;gap:6px;font:15px/1.5 \"Segoe UI Variable Text\",\"Segoe UI\",system-ui,-apple-system,Roboto,sans-serif;color:#14171a}.ds-lbl{font-weight:600;font-size:14px}.ds-help{font-size:13px;color:#636c72}.ds-input{width:100%;min-height:36px;padding:7px 10px;border:1px solid #b9c0c4;border-radius:4px;background:#ffffff;color:#14171a;font:inherit}.ds-input::placeholder{color:#636c72}.ds-input:focus-visible{outline:2px solid #14171a;outline-offset:0;border-color:#14171a}"
+    },
+    {
+      "name": "Top Bar Tabs",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "Text tabs at full bar height; the current one in ink with a 2px underline.",
+      "html": "<nav class=\"ds-bar\"><span class=\"ds-mark\">flashcards</span><a href=\"#\" aria-current=\"page\">Decks</a><a href=\"#\">Notes</a><a href=\"#\">Settings</a></nav>",
+      "css": ".ds-bar{display:flex;align-items:center;gap:2px;height:52px;padding:0 16px;background:#ffffff;border-bottom:1px solid #d5dadc;font:15px/1.5 \"Segoe UI Variable Text\",\"Segoe UI\",system-ui,-apple-system,Roboto,sans-serif}.ds-mark{font-weight:700;margin-right:18px}.ds-bar a{display:flex;align-items:center;height:100%;padding:0 10px;color:#636c72;font-weight:500;text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-1px}.ds-bar a:hover{color:#14171a}.ds-bar a[aria-current=page]{color:#14171a;font-weight:650;border-bottom-color:#14171a}.ds-bar a:focus-visible{outline:2px solid #14171a;outline-offset:2px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Dispensing Label",
+    "overview": "Spaced repetition is a dosage schedule: each Card is a dose and its Grade sets the next one. The Plugin Page is set like printed label stock. Near-black ink sits on cool white stock, hairline rules divide every row and cell, and figures stand in ruled cells with tabular digits. One teal band, printed square-ended into a ruled cell, marks Due. Nothing else is coloured.\n\nRank comes from weight and case, not size. Page headings are only 19px; the one large element on any screen is the Card text in a Review. Density is calm and operational: one column per screen under a thin top bar, ruled rows, no dashboard and no grid of cards. During a Review the chrome drops faint and the screen holds the Card, its Grades and a small count.\n\nThe world refuses the Deck table with red-to-green Grade buttons, the card-grid dashboard, and any game layer (streaks, confetti, celebration). It has its own look and does not copy FirstMate's pages.",
+    "keyCharacteristics": [
+      "Ink on cool white stock, hairline rules, tabular figures in ruled cells.",
+      "One teal band, for Due only.",
+      "Rank by weight (400 to 700) and uppercase micro-labels, not by size.",
+      "The Card text is the only large type.",
+      "Keyboard-first: every Review action shows its key as a key cap.",
+      "Light and dark from the same token set; system fonts only."
+    ],
+    "rules": [
+      {
+        "name": "The One Band Rule",
+        "body": "The band marks Due and nothing else. A Deck with 0 Due shows a faint 0 in a plain cell. Grades, buttons, links and progress never borrow the band.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ink Is Primary Rule",
+        "body": "The primary action is filled with ink, not with the accent. Selection (chips, segments, active tab) is also ink.",
+        "section": "colors"
+      },
+      {
+        "name": "The Colourless Grade Rule",
+        "body": "Grades carry no colour. Again, Hard, Good and Easy look identical in the Grade row; in the session strip they differ by height only.",
+        "section": "colors"
+      },
+      {
+        "name": "The Weight Not Size Rule",
+        "body": "Rank a line by weight, case and ink before size. No page heading exceeds 19px; only the Card front is large.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Figure Rule",
+        "body": "Every count, interval and time renders with tabular numerals, so columns of figures align like a printed table.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Stock Rule",
+        "body": "Sheets, forms, groups and empty states are flat: stock, hairline, 6px corners. Only the Review Card and the Popup window may cast a shadow.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Faint Chrome Rule",
+        "body": "During a Review the top bar drops to 38% opacity and returns to full on hover or keyboard focus.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** put the band only in the Due cell of a Deck row, and only when Due is above zero.",
+      "**Do** fill the primary action with ink (#14171a light, #e8edef dark) and keep one primary per screen region.",
+      "**Do** rank text by weight and case; keep page headings at 19px and let the Card front be the only large type.",
+      "**Do** set every count, interval and time with tabular numerals in a ruled, right-aligned cell.",
+      "**Do** show the key cap beside every action that has a key.",
+      "**Do** gate hover fills behind `(hover: hover) and (pointer: fine)`.",
+      "**Do** keep the Review still: no transition on reveal, Grade or the next Card. Only rare state changes (the delete confirm, Saved) may fade in, at 0.15s.",
+      "**Do** use inline SVG icons at 16px, always with a text label or an aria-label."
+    ],
+    "donts": [
+      "**Don't** colour the Grades. No red-to-green Grade buttons, no coloured marks in the session strip.",
+      "**Don't** use the band for buttons, links, focus, selection or progress.",
+      "**Don't** lay Decks or Notes out as a grid of cards or a dashboard of statistics.",
+      "**Don't** add streaks, confetti, XP or celebration screens.",
+      "**Don't** shadow flat surfaces; only the Review Card and the Popup window lift.",
+      "**Don't** load web fonts."
+    ]
+  }
+}
