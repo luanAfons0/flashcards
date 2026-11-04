@@ -87,6 +87,17 @@ a whole number from 0 to 9999. `get_settings` reads it back. A day starts at
 back the same day without counting again. `list_decks`, the Review and
 `remind_due` count with the limit applied.
 
+## Add a Note on the Plugin Page
+
+Add Note, in the top bar, opens the Note editor (`/p/flashcards/#add`). Pick a
+Deck, or type a new name and Save makes that Deck. Pick the Note Type: Basic,
+Basic and reversed, or Cloze. Write the Fields in Markdown, and the preview
+shows every Card the Note makes as the Review will ask it. Write Cloze gaps as
+in Anki, `{{c1::answer}}` or `{{c1::answer::hint}}`; gaps with the same number
+hide together on one Card, and a Cloze with no gap is not saved. Type a Tag
+and press Enter to add it. Ctrl+Enter saves; Cancel goes back with nothing
+saved.
+
 ## What it needs
 
 Node 24 or newer, for TypeScript with no build step and for `node:sqlite`. The

@@ -20,7 +20,7 @@ const ROUTES = {
   decks: { view: 'decks-view', tab: 'decks', draw: drawDecks },
   review: { view: 'review-view', tab: null, draw: drawStudy },
   notes: { view: 'notes-view', tab: 'notes', draw: null },
-  add: { view: 'editor-view', tab: 'notes', draw: null },
+  add: { view: 'editor-view', tab: 'notes', draw: () => drawEditor(null) },
   settings: { view: 'settings-view', tab: 'settings', draw: drawSettings },
 };
 
@@ -44,6 +44,7 @@ async function show() {
   byId('page').dataset.mode = route === ROUTES.review ? 'review' : '';
   if (route !== ROUTES.review) endReview();
   if (route !== ROUTES.settings) leaveSettings();
+  if (route.view !== ROUTES.add.view) leaveEditor();
   say('');
   if (route.draw === null) return;
   try {
@@ -165,6 +166,9 @@ byId('settings-form').addEventListener('submit', saveSettings);
 byId('settings-form').addEventListener('input', () => {
   byId('saved').hidden = true;
 });
+
+// The Note editor: note-editor.js wires its form, Fields and Tags.
+wireEditor();
 
 /** Say one sentence in the banner, or clear it with none. */
 function say(sentence) {
