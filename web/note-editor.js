@@ -23,7 +23,8 @@
  * The open editor, or null: the address it opened at, the Note it edits (null
  * for a new one), its Note Type, every Field typed so far by name (so
  * switching Note Type keeps Front and Back), its Tags, whether its Cloze
- * error shows, and where Cancel goes.
+ * error shows, where Cancel goes, and whether a Save is on its way, so a
+ * second Save before it answers makes no second Note.
  */
 let editor = null;
 
@@ -51,6 +52,7 @@ async function drawEditor(note) {
     values: note ? Object.assign({}, note.fields) : {},
     tags: note ? note.tags.slice() : [],
     faulty: false,
+    saving: false,
     back: addressBefore !== null && !isEditorAddress(addressBefore) ? addressBefore || '#decks' : '#notes',
   };
   byId('h-editor').textContent = editorHeading(editor.note);
@@ -123,7 +125,7 @@ function clearClozeError() {
 /** Save the Note, or show why it cannot be; a saved Note goes back to where the editor was opened from. */
 async function saveNote(event) {
   event.preventDefault();
-  if (editor === null) return;
+  if (editor === null || editor.saving) return;
   keepFields();
   addTypedTags();
   if (noteProblem(editor.noteType, editor.values) !== '') {
@@ -134,6 +136,8 @@ async function saveNote(event) {
   }
   const draft = { deck: byId('ed-deck').value, noteType: editor.noteType, fields: editor.values, tags: editor.tags };
   const save = saveCall(editor.note, draft);
+  const open = editor;
+  open.saving = true;
   try {
     const saved = await call(save.name, save.args);
     lastSaved = { deck: saved.deck || draft.deck, noteType: draft.noteType };
@@ -142,6 +146,8 @@ async function saveNote(event) {
     location.hash = back;
   } catch (fault) {
     say(fault.message || String(fault));
+  } finally {
+    open.saving = false;
   }
 }
 
