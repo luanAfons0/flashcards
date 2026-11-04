@@ -329,6 +329,13 @@ textarea.code { font: 14px/1.6 var(--mono); }
   .notes tbody tr:hover td { background: var(--sunk); }
   .tabs a:hover { color: var(--ink); }
 }
+/* Markdown in a Card: lists and code read from the left, inside the centred Card. */
+.card-body ul, .card-body ol, .card-body pre { display: inline-block; margin: 0 auto; text-align: left; }
+.card-body ul, .card-body ol { padding-left: 1.2em; }
+.card-body pre, .card-body code { font-family: var(--mono); font-size: .9em; }
+.card-body pre { white-space: pre-wrap; }
+/* No motion in the Review: the next Card replaces the last at once, and a Grade never moves. */
+.review .btn, .review .btn:active, .review .grade { transition: none; transform: none; }
 /* Rare state changes fade in; frequent ones never move. */
 tr.confirm td, .saved { transition: opacity .15s var(--ease); @starting-style { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {

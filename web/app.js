@@ -1,7 +1,8 @@
 /* The Plugin Page: the top bar and its views, chosen by the address fragment.
 
-   #decks (or no fragment) is the Decks view, #notes the Notes, #add the Note
-   editor, and #settings the Plugin Settings (FirstMate ADR-0029). The Host's
+   #decks (or no fragment) is the Decks view, #review a Review of every Deck
+   and #review/<Deck> of one, #notes the Notes, #add the Note editor, and
+   #settings the Plugin Settings (FirstMate ADR-0029). The Host's
    "Open settings" changes only the fragment of a page already open, so the
    view follows every hashchange as well as the address it loads with.
 
@@ -17,6 +18,7 @@ function byId(id) {
 /** Each view by its fragment, and the tab of the top bar it belongs to. */
 const ROUTES = {
   decks: { view: 'decks-view', tab: 'decks', draw: drawDecks },
+  review: { view: 'review-view', tab: null, draw: drawStudy },
   notes: { view: 'notes-view', tab: 'notes', draw: null },
   add: { view: 'editor-view', tab: 'notes', draw: null },
   settings: { view: 'settings-view', tab: 'settings', draw: null },
@@ -24,7 +26,7 @@ const ROUTES = {
 
 /** The route the address names; an address that names none is the Decks view. */
 function routeOf(hash) {
-  const name = hash.replace(/^#/, '');
+  const name = hash.replace(/^#/, '').split('/')[0];
   return Object.prototype.hasOwnProperty.call(ROUTES, name) ? ROUTES[name] : ROUTES.decks;
 }
 
@@ -38,6 +40,9 @@ async function show() {
     if (tab.dataset.tab === route.tab) tab.setAttribute('aria-current', 'page');
     else tab.removeAttribute('aria-current');
   }
+  // The page bar goes faint in a Review, and a Review left by any way ends.
+  byId('page').dataset.mode = route === ROUTES.review ? 'review' : '';
+  if (route !== ROUTES.review) endReview();
   say('');
   if (route.draw === null) return;
   try {
@@ -111,6 +116,47 @@ byId('deck-rows').addEventListener('keydown', (event) => {
     event.preventDefault();
     keepDeck();
   }
+});
+
+/* Starting a Review. "Study all Due" and the key S on the Decks open
+   #review, a Deck row's Study opens #review/<Deck>, and study.js runs the
+   Review. Esc there comes back to the Decks. */
+
+/** The Deck a Review address names, or null for a Review of every Deck. */
+function deckOf(hash) {
+  const at = hash.indexOf('/');
+  if (at < 0) return null;
+  try {
+    return decodeURIComponent(hash.slice(at + 1));
+  } catch {
+    return hash.slice(at + 1);
+  }
+}
+
+/** The Review view: the Review the address names, started or carried on. */
+function drawStudy() {
+  return startReview(deckOf(location.hash), {
+    leave: () => {
+      location.hash = '#decks';
+    },
+    say: say,
+    compact: false,
+  });
+}
+
+byId('study-all').addEventListener('click', () => {
+  location.hash = '#review';
+});
+byId('deck-rows').addEventListener('click', (event) => {
+  const study = event.target.closest('[data-study]');
+  if (study !== null) location.hash = '#review/' + encodeURIComponent(study.dataset.study);
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 's' && event.key !== 'S') return;
+  if (event.ctrlKey || event.metaKey || event.altKey || event.target.closest('input, textarea, select')) return;
+  if (byId('decks-view').hidden || byId('study-all').hidden || confirming !== null) return;
+  event.preventDefault();
+  location.hash = '#review';
 });
 
 /** Say one sentence in the banner, or clear it with none. */

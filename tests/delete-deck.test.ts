@@ -9,6 +9,7 @@ import { strict as assert } from 'node:assert';
 import test from 'node:test';
 import { addBasic, listDecks, refusalOf } from './helpers/cards.ts';
 import { makeDirectory, startedAndShaken, structureOf } from './helpers/plugin.ts';
+import { AGAIN, EASY, gradeNext } from './helpers/review.ts';
 
 /** What `count_deck` and `delete_deck` answer. */
 type Counted = { readonly deck: string; readonly notes: number; readonly cards: number; readonly reviews: number };
@@ -22,6 +23,26 @@ test('count_deck names the Deck and counts its Notes, Cards and Reviews', async 
   const counted = structureOf<Counted>(await plugin.call('count_deck', { deck: 'Rust ownership' }));
 
   assert.deepEqual(counted, { deck: 'Rust ownership', notes: 2, cards: 2, reviews: 0 });
+});
+
+test('count_deck and delete_deck count every Review of the Deck\'s Cards, and only its own', async (t) => {
+  const plugin = await startedAndShaken(t);
+  await addBasic(plugin, 'Rust ownership', 'Who frees a Box?', 'Its owner.');
+  await addBasic(plugin, 'Rust ownership', 'What does move do?', 'It hands the value to a new owner.');
+  await addBasic(plugin, 'Japanese N4 vocabulary', '駅', 'station');
+  // Three Reviews in Rust ownership (one Card graded Again, then again), one in Japanese.
+  await gradeNext(plugin, AGAIN, 'Rust ownership');
+  await gradeNext(plugin, EASY, 'Rust ownership');
+  await gradeNext(plugin, EASY, 'Rust ownership');
+  await gradeNext(plugin, EASY, 'Japanese N4 vocabulary');
+
+  const counted = structureOf<Counted>(await plugin.call('count_deck', { deck: 'Rust ownership' }));
+  const deleted = structureOf<Counted>(await plugin.call('delete_deck', { deck: 'Rust ownership' }));
+  const other = structureOf<Counted>(await plugin.call('count_deck', { deck: 'Japanese N4 vocabulary' }));
+
+  assert.deepEqual(counted, { deck: 'Rust ownership', notes: 2, cards: 2, reviews: 3 });
+  assert.deepEqual(deleted, counted);
+  assert.equal(other.reviews, 1);
 });
 
 test('count_deck finds a Deck by its name in any letter case, and answers it as kept', async (t) => {

@@ -87,7 +87,7 @@ test('a Deck name is text, never markup', () => {
 });
 
 test('a Deck with anything to study offers Study; one with nothing has it disabled', () => {
-  assert.match(deckRow(japanese, NOW), /<button type="button" class="btn ghost">Study<\/button>/);
+  assert.match(deckRow(japanese, NOW), /<button type="button" class="btn ghost" data-study="Japanese N4 vocabulary">Study<\/button>/);
   assert.match(
     deckRow({ ...rust, new: 0 }, NOW),
     /<button type="button" class="btn ghost" disabled>Study<\/button>/,
