@@ -53,6 +53,21 @@ test('a Deck name in another letter case is the same Deck, kept as it was first 
   assert.deepEqual(listed.decks.map((deck) => [deck.name, deck.notes]), [['Rust ownership', 2]]);
 });
 
+test('a Deck name with letters beyond ASCII is the same Deck in any letter case and either Unicode form', async (t) => {
+  const plugin = await startedAndShaken(t);
+  await addBasic(plugin, 'Verbos AÇÃO', 'fazer, eu, pretérito', 'fiz');
+
+  const lower = await addBasic(plugin, 'verbos ação', 'ter, eu, pretérito', 'tive');
+  // The same letters, each as a base letter and its combining marks (NFD).
+  const decomposed = await addBasic(plugin, 'VERBOS AC\u0327A\u0303O', 'ir, eu, pretérito', 'fui');
+  const german = await addBasic(plugin, 'Straße', 'die Straße', 'the street');
+  const folded = await addBasic(plugin, 'STRASSE', 'der Weg', 'the way');
+
+  const listed = await listDecks(plugin);
+  assert.deepEqual([lower.deck, decomposed.deck, german.deck, folded.deck], ['Verbos AÇÃO', 'Verbos AÇÃO', 'Straße', 'Straße']);
+  assert.deepEqual(listed.decks.map((deck) => [deck.name, deck.notes]), [['Straße', 2], ['Verbos AÇÃO', 3]]);
+});
+
 test('a Deck name is taken without the spaces around it', async (t) => {
   const plugin = await startedAndShaken(t);
 

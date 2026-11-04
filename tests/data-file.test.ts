@@ -31,6 +31,55 @@ const VERSION_1 = `
   PRAGMA user_version = 1;
 `;
 
+/**
+ * The schema at version 2, as flashcards left it before Deck names were
+ * compared beyond ASCII: SQLite's NOCASE let "Verbos AÇÃO" and "verbos ação"
+ * be two Decks, each with a Note and its Card.
+ */
+const VERSION_2_TWO_SPELLINGS = `
+  CREATE TABLE decks (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    created_at TEXT NOT NULL
+  );
+  CREATE TABLE notes (
+    id INTEGER PRIMARY KEY,
+    deck_id INTEGER NOT NULL REFERENCES decks (id) ON DELETE CASCADE,
+    note_type TEXT NOT NULL,
+    fields TEXT NOT NULL,
+    tags TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL,
+    modified_at TEXT NOT NULL
+  );
+  CREATE INDEX notes_by_deck ON notes (deck_id);
+  CREATE TABLE cards (
+    id INTEGER PRIMARY KEY,
+    note_id INTEGER NOT NULL REFERENCES notes (id) ON DELETE CASCADE,
+    ordinal INTEGER NOT NULL,
+    due TEXT NOT NULL,
+    stability REAL NOT NULL DEFAULT 0,
+    difficulty REAL NOT NULL DEFAULT 0,
+    state INTEGER NOT NULL DEFAULT 0,
+    reps INTEGER NOT NULL DEFAULT 0,
+    lapses INTEGER NOT NULL DEFAULT 0,
+    scheduled_days INTEGER NOT NULL DEFAULT 0,
+    learning_step INTEGER NOT NULL DEFAULT 0,
+    last_review TEXT,
+    UNIQUE (note_id, ordinal)
+  );
+  CREATE INDEX cards_by_due ON cards (due);
+  INSERT INTO decks (id, name, created_at) VALUES (1, 'Verbos AÇÃO', '2026-11-01T09:00:00.000Z');
+  INSERT INTO decks (id, name, created_at) VALUES (2, 'verbos ação', '2026-11-02T09:00:00.000Z');
+  INSERT INTO decks (id, name, created_at) VALUES (3, 'Rust ownership', '2026-11-02T09:00:00.000Z');
+  INSERT INTO notes (deck_id, note_type, fields, created_at, modified_at)
+    VALUES (1, 'basic', '{"Front":"fazer, eu","Back":"fiz"}', '2026-11-01T09:00:00.000Z', '2026-11-01T09:00:00.000Z');
+  INSERT INTO notes (deck_id, note_type, fields, created_at, modified_at)
+    VALUES (2, 'basic', '{"Front":"ter, eu","Back":"tive"}', '2026-11-02T09:00:00.000Z', '2026-11-02T09:00:00.000Z');
+  INSERT INTO cards (note_id, ordinal, due) VALUES (1, 0, '2026-11-01T09:00:00.000Z');
+  INSERT INTO cards (note_id, ordinal, due) VALUES (2, 0, '2026-11-02T09:00:00.000Z');
+  PRAGMA user_version = 2;
+`;
+
 /** Write `flashcards.db` into a Plugin directory as an older flashcards left it. */
 function seed(directory: string, sql: string): void {
   const old = new DatabaseSync(join(directory, 'flashcards.db'));
@@ -61,6 +110,25 @@ test('the Decks in flashcards.db survive a restart of the Plugin Server', async 
     listed.decks.map((deck) => deck.name),
     ['AWS Solutions Architect', 'Rust ownership'],
   );
+});
+
+test('two Decks an older file kept apart only by letters beyond ASCII become one, with every Note', async (t) => {
+  const directory = await makeDirectory(t);
+  seed(directory, VERSION_2_TWO_SPELLINGS);
+  const plugin = await startedAndShaken(t, { directory });
+
+  const listed = structureOf<{ decks: { name: string; notes: number; cards: number }[] }>(
+    await plugin.call('list_decks'),
+  );
+  const added = structureOf<{ deck: string }>(
+    await plugin.call('add_note', { deck: 'VERBOS AÇÃO', noteType: 'basic', fields: { Front: 'ir, eu', Back: 'fui' } }),
+  );
+
+  assert.deepEqual(
+    listed.decks.map((deck) => [deck.name, deck.notes, deck.cards]),
+    [['Rust ownership', 0, 0], ['Verbos AÇÃO', 2, 2]],
+  );
+  assert.equal(added.deck, 'Verbos AÇÃO');
 });
 
 test('a file at a schema newer than this flashcards knows stops it with one sentence', async (t) => {

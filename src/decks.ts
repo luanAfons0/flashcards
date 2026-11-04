@@ -1,13 +1,15 @@
 /**
  * Decks: named groups of Notes, made by the first Note that names one.
  *
- * A Deck name is unique without regard to letter case, and it keeps the case
- * it was first written in. Decks do not nest: `Languages::Japanese` is one
+ * A Deck name is unique without regard to letter case or Unicode form, by
+ * its key (see deck-key.ts), and it keeps the spelling it was first written
+ * in. Decks do not nest: `Languages::Japanese` is one
  * name. `list_decks` and `remind_due` read every Deck here with its counts
  * for today, the Daily Limit applied, and
  * `count_deck` and `delete_deck` count and delete one Deck with all it holds.
  */
 import { IS_NEW, NEW_STATE } from './cards.ts';
+import { deckKey } from './deck-key.ts';
 import { badInput } from './mcp.ts';
 import { reviewQueue } from './review.ts';
 import type { Store } from './store.ts';
@@ -43,10 +45,16 @@ export function checkDeckName(tool: string, given: unknown): string {
 
 /** The Deck with this name in any letter case, made now if there is none. Run it inside a transaction. */
 export function deckNamed(store: Store, name: string, now: Date): { readonly id: number; readonly name: string } {
-  store
-    .prepare('INSERT INTO decks (name, created_at) VALUES (?, ?) ON CONFLICT (name) DO NOTHING')
-    .run(name, now.toISOString());
-  return store.prepare('SELECT id, name FROM decks WHERE name = ?').get(name) as { id: number; name: string };
+  const found = deckByKey(store, name);
+  if (found !== undefined) return found;
+  store.prepare('INSERT INTO decks (name, key, created_at) VALUES (?, ?, ?)').run(name, deckKey(name), now.toISOString());
+  return deckByKey(store, name) as { id: number; name: string };
+}
+
+function deckByKey(store: Store, name: string): { id: number; name: string } | undefined {
+  return store.prepare('SELECT id, name FROM decks WHERE key = ?').get(deckKey(name)) as
+    | { id: number; name: string }
+    | undefined;
 }
 
 /**
@@ -94,9 +102,7 @@ export type DeckContents = {
 
 /** The Deck with this name in any letter case, or a refusal when there is none. */
 export function existingDeck(tool: string, store: Store, name: string): { readonly id: number; readonly name: string } {
-  const deck = store.prepare('SELECT id, name FROM decks WHERE name = ?').get(name) as
-    | { id: number; name: string }
-    | undefined;
+  const deck = deckByKey(store, name);
   if (deck === undefined) {
     throw badInput(`${tool} found no Deck named "${name}". list_decks names every Deck.`);
   }
