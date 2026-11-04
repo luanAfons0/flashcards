@@ -89,7 +89,49 @@
     <!-- Note editor -->
     <section id="editor-view" aria-labelledby="h-editor" hidden>
       <div class="col" style="max-width:1040px">
-        <div class="head"><h1 id="h-editor">Add Note</h1></div>
+        <div class="head">
+          <h1 id="h-editor">Add Note</h1>
+          <span class="quiet small">Ctrl+Enter saves</span>
+        </div>
+        <div class="editor">
+          <form class="form" id="note-form" novalidate>
+            <div class="row2">
+              <div class="field">
+                <label for="ed-deck">Deck</label>
+                <!-- A Deck by name: pick one, or type a new name and Save creates it. -->
+                <input id="ed-deck" type="text" list="deck-names" autocomplete="off" spellcheck="false">
+                <datalist id="deck-names"></datalist>
+              </div>
+              <div class="field">
+                <span class="lbl" id="type-lbl">Note Type</span>
+                <div class="seg" role="radiogroup" aria-labelledby="type-lbl">
+                  <label><input type="radio" name="ntype" value="basic">Basic</label>
+                  <label><input type="radio" name="ntype" value="reversed">Basic and reversed</label>
+                  <label><input type="radio" name="ntype" value="cloze">Cloze</label>
+                </div>
+              </div>
+            </div>
+            <div id="fields"></div>
+            <div class="field">
+              <label for="tag-new">Tags</label>
+              <div class="taginput">
+                <span id="tag-list" style="display:contents"></span>
+                <input id="tag-new" type="text" placeholder="Add a Tag" autocomplete="off">
+              </div>
+            </div>
+            <div class="form-foot">
+              <span class="help">Fields take Markdown.</span>
+              <div class="row-tools">
+                <button type="button" class="btn ghost" id="editor-cancel">Cancel</button>
+                <button type="submit" class="btn primary">Save Note</button>
+              </div>
+            </div>
+          </form>
+          <aside class="preview" aria-labelledby="h-preview">
+            <h2 id="h-preview">Cards this Note makes</h2>
+            <div id="preview-cards" class="preview" style="position:static"></div>
+          </aside>
+        </div>
       </div>
     </section>
 
@@ -132,6 +174,8 @@
 <script src="cloze.js"></script>
 <script src="decks.js"></script>
 <script src="review.js"></script>
+<script src="editor.js"></script>
+<script src="note-editor.js"></script>
 <script src="study.js"></script>
 <script src="settings.js"></script>
 <script src="app.js"></script>
