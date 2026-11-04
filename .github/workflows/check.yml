@@ -18,6 +18,8 @@ jobs:
   check:
     name: Types and tests
     runs-on: ${{ matrix.os }}
+    # A hung Plugin Server must fail the job, not hold it for six hours.
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:

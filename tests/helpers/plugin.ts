@@ -26,7 +26,7 @@
 import { spawn } from 'node:child_process';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { TestContext } from 'node:test';
 
@@ -127,8 +127,12 @@ const running = new Map<string, Array<() => Promise<void>>>();
 export async function makeDirectory(t: TestContext): Promise<string> {
   const directory = await mkdtemp(join(tmpdir(), 'flashcards-test-'));
   t.after(async () => {
-    await Promise.all((running.get(directory) ?? []).map((stop) => stop()));
-    running.delete(directory);
+    // Stop every Plugin Server that runs in this directory or in a folder
+    // inside it first: Windows will not remove a folder that a running
+    // process has as its working directory.
+    const inside = [...running.keys()].filter((key) => key === directory || key.startsWith(join(directory, sep)));
+    await Promise.all(inside.flatMap((key) => running.get(key) ?? []).map((stop) => stop()));
+    for (const key of inside) running.delete(key);
     // Windows may hold the file a moment after its Plugin Server has ended.
     await rm(directory, { recursive: true, force: true, maxRetries: 20, retryDelay: 100 });
   });
