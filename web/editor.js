@@ -142,3 +142,13 @@ function saveCall(note, draft) {
   const args = { deck: draft.deck, noteType: draft.noteType, fields: fields, tags: draft.tags.slice() };
   return note ? { name: 'update_note', args: Object.assign({ id: note.id }, args) } : { name: 'add_note', args: args };
 }
+
+/**
+ * The Note Types the editor does not offer for this Note: editing one never
+ * changes it to or from Cloze, which update_note refuses. A new Note may be
+ * any Note Type.
+ */
+function lockedNoteTypes(note) {
+  if (!note) return [];
+  return note.noteType === 'cloze' ? ['basic', 'reversed'] : ['cloze'];
+}

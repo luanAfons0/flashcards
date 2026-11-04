@@ -8,9 +8,10 @@
 import type { Clock } from './clock.ts';
 import { dailyLimit, today } from './daily-limit.ts';
 import { checkDeckName, contentsOf, deleteDeck, existingDeck, summaries } from './decks.ts';
+import { checkSearch, findNotes } from './find-notes.ts';
 import { badInput, told, type Tool } from './mcp.ts';
 import { noteTypeOf } from './note-types.ts';
-import { addNote, checkFields, checkNoteType, checkTags } from './notes.ts';
+import { addNote, cardsOf, checkFields, checkNoteId, checkNoteType, checkTags, deleteNote, existingNote, updateNote } from './notes.ts';
 import { remindDue } from './reminder.ts';
 import { gradeCard, nextCard, undoGrade } from './review.ts';
 import { readSettings, updateSettings } from './settings.ts';
@@ -33,6 +34,7 @@ export function toolsFor(context: Context): readonly Tool[] {
     undoGradeTool(context),
     remindDueTool(context),
     ...settingsTools(),
+    ...noteTools(context),
   ];
 }
 
@@ -268,6 +270,98 @@ function settingsTools(): readonly Tool[] {
         required: [],
       },
       call: (given) => told(updateSettings(given)),
+    },
+  ];
+}
+
+// Finding and editing Notes: the Notes view lists a Deck's Notes, and the
+// Note editor gets one, saves it again, or deletes it.
+function noteTools({ store, clock }: Context): readonly Tool[] {
+  const byId = {
+    type: 'object',
+    properties: { id: { type: 'integer', description: 'The id of the Note, as list_notes answers it.' } },
+    required: ['id'],
+  } as const;
+  return [
+    {
+      name: 'list_notes',
+      description:
+        'The Notes of one Deck, in the order they were added, that hold every word of `search` in ' +
+        'any Field or Tag (in any letter case) and every Tag in `tags`. Each Note comes with its id, ' +
+        'its Note Type, its Fields in Markdown, its Tags, and `nextDue`: when its first Card that has ' +
+        'had a Review is Due (null when every Card is a New Card). Answers too the Deck as kept, ' +
+        '`total`, how many Notes the Deck holds, every Tag in the Deck, and `now`. Changes nothing.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          deck: { type: 'string', description: 'The name of the Deck, in any letter case, such as "Japanese N4 vocabulary".' },
+          search: { type: 'string', description: 'Words to find in any Field or Tag, such as "kaisha". Leave it out for every Note.' },
+          tags: { type: 'array', items: { type: 'string' }, description: 'Tags each Note must have, such as ["lesson-12"]. Optional.' },
+        },
+        required: ['deck'],
+      },
+      call: (given) => {
+        const deck = existingDeck('list_notes', store, checkDeckName('list_notes', given['deck']));
+        const words = checkSearch('list_notes', given['search']);
+        const tags = checkTags('list_notes', given['tags']);
+        return told({ ...findNotes(store, deck, words, tags), now: clock().toISOString() });
+      },
+    },
+    {
+      name: 'get_note',
+      description:
+        'One Note by its id: its Deck, its Note Type, its Fields in Markdown and its Tags, as ' +
+        'update_note takes them, and each of its Cards with its ordinal, the side or gap it asks, ' +
+        'when it is Due next (null for a New Card) and how many Reviews it has had. Changes nothing.',
+      inputSchema: byId,
+      call: (given) => {
+        const note = existingNote('get_note', store, checkNoteId('get_note', given['id']));
+        return told({ ...note, cards: cardsOf(store, note) });
+      },
+    },
+    {
+      name: 'update_note',
+      description:
+        'Change one Note: its Deck (made when no Deck has the name), its Note Type, its Fields and ' +
+        'its Tags, each as add_note takes them. A change to a Field keeps every Card\'s schedule. ' +
+        'A Card whose ordinal goes, such as a Cloze gap number taken out or the reverse Card when ' +
+        '"reversed" becomes "basic", is deleted with its Reviews; a new ordinal makes a New Card. ' +
+        'A change to or from "cloze" is refused. Answers the Note\'s id, its Deck as kept, how ' +
+        'many Cards it makes now, and the ordinals of the Cards `added` and `deleted`.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', description: 'The id of the Note, as list_notes answers it.' },
+          deck: { type: 'string', description: 'The name of the Deck the Note is in, or moves to.' },
+          noteType: { type: 'string', enum: ['basic', 'reversed', 'cloze'], description: 'The Note Type.' },
+          fields: {
+            type: 'object',
+            description: 'Each Field of the Note Type by name, in Markdown, as add_note takes them.',
+            additionalProperties: { type: 'string' },
+          },
+          tags: { type: 'array', items: { type: 'string' }, description: 'Every Tag the Note keeps. Leave it out for none.' },
+        },
+        required: ['id', 'deck', 'noteType', 'fields'],
+      },
+      call: (given) => {
+        const id = checkNoteId('update_note', given['id']);
+        const deck = checkDeckName('update_note', given['deck']);
+        const key = checkNoteType('update_note', given['noteType']);
+        const fields = checkFields('update_note', noteTypeOf(key)!, given['fields']);
+        const tags = checkTags('update_note', given['tags']);
+        return told(updateNote('update_note', store, { id, deck, noteType: key, fields, tags }, clock()));
+      },
+    },
+    {
+      name: 'delete_note',
+      description:
+        'Delete one Note with its Cards and their Reviews. It cannot be undone; its Deck and every ' +
+        'other Note stay. Answers the Note\'s id, its Deck, and how many Cards and Reviews it deleted.',
+      inputSchema: byId,
+      call: (given) => {
+        const id = checkNoteId('delete_note', given['id']);
+        return told(within(store, () => deleteNote('delete_note', store, id)));
+      },
     },
   ];
 }

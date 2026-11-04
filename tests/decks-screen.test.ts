@@ -105,7 +105,7 @@ test('Study follows what a Review of the Deck shows, not its counts', () => {
 test('each row reaches the Notes of its Deck and offers Delete Deck, named for the Deck', () => {
   const row = deckRow(rust, NOW);
 
-  assert.match(row, /href="#notes" aria-label="Notes of Rust ownership"/);
+  assert.match(row, /href="#notes\/Rust%20ownership" aria-label="Notes of Rust ownership"/);
   assert.match(row, /aria-label="Delete Rust ownership" title="Delete Deck"/);
 });
 

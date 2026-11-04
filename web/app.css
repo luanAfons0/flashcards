@@ -265,6 +265,9 @@ textarea.code { font: 14px/1.6 var(--mono); }
 .seg input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
 .seg label:has(input:checked) { background: var(--ink); color: var(--stock); font-weight: 600; }
 .seg label:has(input:focus-visible) { outline: 2px solid var(--ink); outline-offset: 2px; z-index: 1; }
+/* Editing a Note offers no change to or from Cloze: that choice is there, faint, and takes no click. */
+.seg label:has(input:disabled) { color: var(--ink-3); cursor: default; }
+.seg input:disabled { cursor: default; }
 
 /* Notes. */
 .tools { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; }

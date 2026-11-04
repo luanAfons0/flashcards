@@ -9,6 +9,10 @@
    being typed. Its top level only declares: app.js calls wireEditor once,
    and leaveEditor when another view shows.
 
+   #edit/<id> opens it on a Note through drawEdit. Editing a Note never
+   offers the Note Types that would change it to or from Cloze, and should
+   update_note still refuse one, the banner says why.
+
    Save refuses a Cloze with no gap here, inline, before any call. A Deck
    name no Deck has makes that Deck on Save. Ctrl+Enter saves from any field;
    Cancel, and a Save that went through, go back to the view the editor was
@@ -51,11 +55,26 @@ async function drawEditor(note) {
   };
   byId('h-editor').textContent = editorHeading(editor.note);
   byId('ed-deck').value = note ? note.deck : known ? lastSaved.deck : listed.decks.length > 0 ? listed.decks[0].name : '';
-  for (const radio of byId('note-form').querySelectorAll('input[name="ntype"]')) radio.checked = radio.value === editor.noteType;
+  const locked = lockedNoteTypes(editor.note);
+  for (const radio of byId('note-form').querySelectorAll('input[name="ntype"]')) {
+    radio.checked = radio.value === editor.noteType;
+    radio.disabled = locked.indexOf(radio.value) !== -1;
+  }
   byId('tag-new').value = '';
   drawFields();
   drawTags();
   (byId('ed-deck').value === '' ? byId('ed-deck') : byId('fields').querySelector('[data-field]')).focus();
+}
+
+/** The id of the Note an #edit/<id> address names. */
+function noteIdOf(hash) {
+  return Number(hash.slice(hash.indexOf('/') + 1));
+}
+
+/** Open the Note editor on the Note #edit/<id> names, as get_note answers it. */
+async function drawEdit() {
+  const note = await call('get_note', { id: noteIdOf(location.hash) });
+  return drawEditor(note);
 }
 
 /** Close the Note editor, so the next one opens fresh. */

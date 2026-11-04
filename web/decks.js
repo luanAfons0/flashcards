@@ -77,7 +77,7 @@ function deckRow(deck, now) {
     '<td class="n"><span class="fig' + (deck.new > 0 ? '' : ' zero') + '">' + deck.new + '</span></td>' +
     due +
     '<td class="acts"><div class="row-tools">' + study +
-    '<a class="btn ghost icon tool tool-notes" href="#notes" aria-label="Notes of ' + name + '" title="Notes"><svg class="i" aria-hidden="true"><use href="#i-notes"/></svg></a>' +
+    '<a class="btn ghost icon tool tool-notes" href="#notes/' + escapeHtml(encodeURIComponent(deck.name)) + '" aria-label="Notes of ' + name + '" title="Notes"><svg class="i" aria-hidden="true"><use href="#i-notes"/></svg></a>' +
     '<button type="button" class="btn ghost icon tool" data-delete="' + name + '" aria-label="Delete ' + name + '" title="Delete Deck"><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg></button>' +
     '</div></td></tr>';
 }
