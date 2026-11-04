@@ -66,6 +66,22 @@ test('a link to a script address is kept as text, not as a link', () => {
   assert.match(html, /click/);
 });
 
+test('a script address hidden behind control characters or spaces is kept as text, not as a link', () => {
+  // Browsers drop leading C0 controls and spaces from an href, so each of
+  // these would run as javascript: if it were kept.
+  for (const address of ['\u0002javascript:alert(1)', '\u0000javascript:alert(1)', '\u001fJavaScript:alert(1)', '\u007fjavascript:alert(1)']) {
+    const html = render(`[x](${address})`);
+
+    assert.ok(!html.includes('<a'), JSON.stringify(html));
+  }
+});
+
+test('a link keeps a relative address, a fragment and a mailto address', () => {
+  for (const address of ['/notes', './a.html', '#top', 'mailto:me@example.com', 'page.html']) {
+    assert.match(render(`[x](${address})`), new RegExp(`<a href="${address.replace(/[.]/g, '\\.')}" `));
+  }
+});
+
 test('a quote in a link address cannot break out of its attribute', () => {
   const html = render('[x](https://example.com/"onmouseover="alert(1))');
 
