@@ -212,6 +212,8 @@ git-ignored:
 
 - `mcp.js`: `mcp.ts`, `src/` and `ts-fsrs` in one ES module, made by tsdown.
   It is not minified, so a stack trace stays readable.
+- `package.json`: `{"type":"module"}` only, so Node reads `mcp.js` as an ES
+  module even below a folder whose `package.json` says CommonJS.
 - `web/`: the Plugin Page, as it is.
 - `mcp`: the `sh` wrapper for a `wsl` Place, which runs `mcp.js`.
 

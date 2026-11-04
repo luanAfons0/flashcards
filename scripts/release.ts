@@ -15,6 +15,10 @@
  *   beside it, because the Host starts `mcp.ts` before `mcp.js` (FirstMate
  *   ADR-0028) and would run the source.
  * - `web/`: the Plugin Page and the Popup, as they are.
+ * - `package.json`: `{"type":"module"}` and nothing more, so Node reads
+ *   `mcp.js` as an ES module wherever the Plugin directory sits. Without it,
+ *   Node goes up to the nearest `package.json` above: one with no type warns
+ *   on every start, and one of CommonJS will not run `mcp.js` at all.
  * - `mcp`: the repository's own `sh` wrapper for a `wsl` Place, pointed at
  *   `mcp.js`, so that the search for a Node 24 has one source.
  *
@@ -53,6 +57,8 @@ await build({
   // so the Plugin Release is one mcp.js and not a folder of chunks.
   outputOptions: { codeSplitting: false },
 });
+
+await writeFile(join(out, 'package.json'), `${JSON.stringify({ type: 'module' })}\n`);
 
 await cp(join(REPOSITORY, 'web'), join(out, 'web'), { recursive: true });
 
