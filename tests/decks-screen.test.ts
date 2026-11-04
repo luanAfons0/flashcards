@@ -17,7 +17,7 @@ process.env['TZ'] = 'UTC';
 
 const REPOSITORY = dirname(dirname(fileURLToPath(import.meta.url)));
 
-type Deck = { name: string; notes: number; cards: number; new: number; due: number; nextDue: string | null };
+type Deck = { name: string; notes: number; cards: number; new: number; due: number; nextDue: string | null; left: number };
 
 const page = createContext({});
 runInContext(await readFile(join(REPOSITORY, 'web', 'decks.js'), 'utf8'), page);
@@ -39,8 +39,8 @@ function cells(html: string): string[] {
   return [...html.matchAll(/<td[\s\S]*?<\/td>/g)].map((found) => found[0]);
 }
 
-const japanese: Deck = { name: 'Japanese N4 vocabulary', notes: 486, cards: 960, new: 10, due: 34, nextDue: null };
-const rust: Deck = { name: 'Rust ownership', notes: 41, cards: 58, new: 5, due: 0, nextDue: '2026-11-05T04:00:00.000Z' };
+const japanese: Deck = { name: 'Japanese N4 vocabulary', notes: 486, cards: 960, new: 10, due: 34, nextDue: null, left: 44 };
+const rust: Deck = { name: 'Rust ownership', notes: 41, cards: 58, new: 5, due: 0, nextDue: '2026-11-05T04:00:00.000Z', left: 5 };
 
 test('a Deck row has the Deck name, its Notes and Cards, and its New and Due cells', () => {
   const [name, fresh, due] = cells(deckRow(japanese, NOW));
@@ -66,7 +66,7 @@ test('a Deck with nothing Due says when its next Card is Due instead of its coun
 });
 
 test('a Deck with nothing Due and nothing waiting shows its counts, in the singular for one', () => {
-  const [name] = cells(deckRow({ name: 'Go', notes: 1, cards: 1, new: 1, due: 0, nextDue: null }, NOW));
+  const [name] = cells(deckRow({ name: 'Go', notes: 1, cards: 1, new: 1, due: 0, nextDue: null, left: 1 }, NOW));
 
   assert.equal(shown(name ?? ''), 'Go1 Note, 1 Card');
 });
@@ -89,9 +89,17 @@ test('a Deck name is text, never markup', () => {
 test('a Deck with anything to study offers Study; one with nothing has it disabled', () => {
   assert.match(deckRow(japanese, NOW), /<button type="button" class="btn ghost" data-study="Japanese N4 vocabulary">Study<\/button>/);
   assert.match(
-    deckRow({ ...rust, new: 0 }, NOW),
+    deckRow({ ...rust, new: 0, left: 0 }, NOW),
     /<button type="button" class="btn ghost" disabled>Study<\/button>/,
   );
+});
+
+test('Study follows what a Review of the Deck shows, not its counts', () => {
+  // A Card in a short learning step is not Due yet, and a Review learns it
+  // ahead; New Cards over the Daily Limit wait for the next day.
+  const waiting = { ...rust, new: 0, due: 0, nextDue: '2026-11-04T10:10:00.000Z', left: 1 };
+  assert.match(deckRow(waiting, NOW), /data-study="Rust ownership">Study<\/button>/);
+  assert.match(deckRow({ ...rust, new: 0, left: 0 }, NOW), /disabled>Study<\/button>/);
 });
 
 test('each row reaches the Notes of its Deck and offers Delete Deck, named for the Deck', () => {

@@ -97,6 +97,31 @@
     <section id="settings-view" aria-labelledby="h-settings" hidden>
       <div class="col settings">
         <div class="head"><h1 id="h-settings">Settings</h1></div>
+        <form class="group" id="settings-form" novalidate>
+          <h2>Daily Limit</h2>
+          <div class="setting">
+            <label for="lim-new">New Cards per day</label>
+            <input id="lim-new" type="number" min="0" max="9999" inputmode="numeric">
+            <p class="help">The most New Cards one day shows, across all Decks.</p>
+            <p class="err" id="lim-new-err" hidden><svg class="i" aria-hidden="true"><use href="#i-warn"/></svg><span></span></p>
+          </div>
+          <div class="setting">
+            <label for="lim-rev">Reviews per day</label>
+            <input id="lim-rev" type="number" min="0" max="9999" inputmode="numeric">
+            <p class="help">The most Reviews of other Cards one day shows. Cards over the limit wait for the next day.</p>
+            <p class="err" id="lim-rev-err" hidden><svg class="i" aria-hidden="true"><use href="#i-warn"/></svg><span></span></p>
+          </div>
+          <div class="setting">
+            <span class="lbl">A day starts at</span>
+            <span class="fact">4:00</span>
+            <p class="help">Local time. A Review at 1:00 still counts for the day before.</p>
+          </div>
+          <div class="setting" style="grid-template-columns:1fr auto">
+            <span class="saved" id="saved" hidden><svg class="i" aria-hidden="true"><use href="#i-check"/></svg>Saved</span>
+            <span id="saved-spacer"></span>
+            <button type="submit" class="btn primary" style="grid-column:2;grid-row:1">Save</button>
+          </div>
+        </form>
       </div>
     </section>
   </main>
@@ -107,6 +132,7 @@
 <script src="decks.js"></script>
 <script src="review.js"></script>
 <script src="study.js"></script>
+<script src="settings.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

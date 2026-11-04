@@ -23,6 +23,7 @@ const WEB = join(REPOSITORY, 'web');
 const PAGES = [
   { page: 'index.html', script: 'app.js' },
   { page: 'index.html', script: 'study.js' },
+  { page: 'index.html', script: 'settings.js' },
 ];
 
 /** Every `href` and `src` the page names, in the order it names them. */

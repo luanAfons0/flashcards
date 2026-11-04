@@ -12,6 +12,7 @@ import { badInput, told, type Tool } from './mcp.ts';
 import { noteTypeOf } from './note-types.ts';
 import { addNote, checkFields, checkNoteType, checkTags } from './notes.ts';
 import { gradeCard, nextCard } from './review.ts';
+import { readSettings, updateSettings } from './settings.ts';
 import { within, type Store } from './store.ts';
 
 /** What the tools work with: the data, and the time it is now. */
@@ -22,7 +23,7 @@ export type Context = {
 
 /** The tools, bound to this Store and this Clock. */
 export function toolsFor(context: Context): readonly Tool[] {
-  return [addNoteTool(context), listDecks(context), countDeck(context), deleteDeckTool(context), ...reviewTools(context)];
+  return [addNoteTool(context), listDecks(context), countDeck(context), deleteDeckTool(context), ...reviewTools(context), ...settingsTools()];
 }
 
 function addNoteTool({ store, clock }: Context): Tool {
@@ -169,6 +170,39 @@ function reviewTools({ store, clock }: Context): readonly Tool[] {
         }
         return told(gradeCard(store, card as number, grade as number, clock()));
       },
+    },
+  ];
+}
+
+// The Plugin Settings: the Daily Limit, for every Deck. The Plugin Page reads
+// and saves them at #settings.
+function settingsTools(): readonly Tool[] {
+  const limit = { type: ['integer', 'null'], minimum: 0, maximum: 9999 } as const;
+  return [
+    {
+      name: 'get_settings',
+      description:
+        'The Plugin Settings: the Daily Limit, the same for every Deck. newCardsPerDay is the most ' +
+        'New Cards one day shows (20 when not set), and reviewsPerDay the most Reviews of other ' +
+        'Cards (200 when not set). A day starts at 4:00 local time.',
+      inputSchema: { type: 'object', properties: {}, required: [] },
+      call: () => told(readSettings()),
+    },
+    {
+      name: 'update_settings',
+      description:
+        'Save the Plugin Settings. Each is a whole number from 0 to 9999; a setting left out keeps ' +
+        'its value, and null puts back its default. A value out of range is refused, and nothing ' +
+        'is saved. Answers the Settings as get_settings does.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          newCardsPerDay: { ...limit, description: 'The most New Cards one day shows, across all Decks.' },
+          reviewsPerDay: { ...limit, description: 'The most Reviews of other Cards one day shows, across all Decks.' },
+        },
+        required: [],
+      },
+      call: (given) => told(updateSettings(given)),
     },
   ];
 }

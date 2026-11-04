@@ -57,7 +57,9 @@ function totalDue(decks) {
 /**
  * One ruled Deck row. Its meta line counts its Notes and Cards; a Deck with
  * nothing Due says instead when its next Card is Due. The Due cell is the band
- * when Due is above 0, and a faint 0 in a plain cell when it is not.
+ * when Due is above 0, and a faint 0 in a plain cell when it is not. Study is
+ * offered when a Review of the Deck has a Card to show: a Card in a learning
+ * step that is not Due yet is one, as the Review learns it ahead.
  */
 function deckRow(deck, now) {
   const name = escapeHtml(deck.name);
@@ -67,7 +69,7 @@ function deckRow(deck, now) {
   const due = deck.due > 0
     ? '<td class="n band">' + deck.due + '</td>'
     : '<td class="n"><span class="fig zero">0</span></td>';
-  const study = deck.due > 0 || deck.new > 0
+  const study = deck.left > 0
     ? '<button type="button" class="btn ghost" data-study="' + name + '">Study</button>'
     : '<button type="button" class="btn ghost" disabled>Study</button>';
   return '<tr>' +
