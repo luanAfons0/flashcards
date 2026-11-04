@@ -1,0 +1,23 @@
+# Publish a Plugin Release on a tag `vMAJOR.MINOR.PATCH` (FirstMate ADR-0033).
+#
+# The work is FirstMate's reusable workflow: it runs `test`, then `build`,
+# which writes release/, and uploads the archive of release/ with its .sha256
+# as a GitHub Release. The Plugin Server is plain JavaScript, so release/ has
+# no platform folders and the one archive serves every platform. It is called
+# at @main, because a called workflow cannot find its own ref.
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    uses: luanAfons0/FirstMate/.github/workflows/plugin-release.yml@main
+    # The workflow creates the GitHub Release, so it needs this and nothing more.
+    permissions:
+      contents: write
+    with:
+      test: npm ci && npm run check
+      build: npm run release
