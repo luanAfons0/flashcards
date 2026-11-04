@@ -51,7 +51,7 @@ test('a Card that has had no Review is a New Card, and is not Due', async (t) =>
   const listed = await listDecks(plugin);
 
   assert.deepEqual(listed.decks, [
-    { name: 'Japanese N4 vocabulary', notes: 2, cards: 2, new: 2, due: 0, nextDue: null },
+    { name: 'Japanese N4 vocabulary', notes: 2, cards: 2, new: 2, due: 0, nextDue: null, left: 2 },
   ]);
 });
 
@@ -88,7 +88,7 @@ test('a Card whose time has come is Due, and one whose time has not come gives t
   const listed = await listDecks(plugin);
 
   assert.deepEqual(listed.decks, [
-    { name: 'Japanese N4 vocabulary', notes: 4, cards: 4, new: 1, due: 2, nextDue: '2026-11-05T04:00:00.000Z' },
+    { name: 'Japanese N4 vocabulary', notes: 4, cards: 4, new: 1, due: 2, nextDue: '2026-11-05T04:00:00.000Z', left: 3 },
   ]);
 });
 
@@ -141,5 +141,5 @@ test('a Deck kept from an older flashcards with no Notes yet is listed with noth
 
   const listed = await listDecks(plugin);
 
-  assert.deepEqual(listed.decks, [{ name: 'Rust ownership', notes: 0, cards: 0, new: 0, due: 0, nextDue: null }]);
+  assert.deepEqual(listed.decks, [{ name: 'Rust ownership', notes: 0, cards: 0, new: 0, due: 0, nextDue: null, left: 0 }]);
 });

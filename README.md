@@ -76,6 +76,17 @@ reminds you every morning:
 }
 ```
 
+## Set the Daily Limit
+
+The Daily Limit is the most New Cards and the most Reviews of other Cards one
+day shows, across all Decks: 20 New Cards and 200 Reviews unless you set it.
+Set it on the Plugin Page at Settings (`/p/flashcards/#settings`), or with the
+`update_settings` tool, `{ "newCardsPerDay": 20, "reviewsPerDay": 200 }`, each
+a whole number from 0 to 9999. `get_settings` reads it back. A day starts at
+4:00 local time, and a Card counts once a day: a Card you grade Again comes
+back the same day without counting again. `list_decks`, the Review and
+`remind_due` count with the limit applied.
+
 ## Review from a Popup
 
 `web/popup.html` is the Popup: the same Review as the Plugin Page, in a small
@@ -127,7 +138,7 @@ the reason is in `firstmate logs`; after you fix it,
 Everything is in one SQLite file, `flashcards.db`, in the Plugin's own
 directory. The Plugin Server makes it on its first start. It is git-ignored,
 so a clone that is also the Plugin directory keeps this machine's Decks out of
-the repository.
+the repository. The Settings are in `settings.json` beside it, git-ignored too.
 
 ## Running it
 

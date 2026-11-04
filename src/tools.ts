@@ -13,6 +13,7 @@ import { noteTypeOf } from './note-types.ts';
 import { addNote, checkFields, checkNoteType, checkTags } from './notes.ts';
 import { remindDue } from './reminder.ts';
 import { gradeCard, nextCard, undoGrade } from './review.ts';
+import { readSettings, updateSettings } from './settings.ts';
 import { within, type Store } from './store.ts';
 
 /** What the tools work with: the data, and the time it is now. */
@@ -31,6 +32,7 @@ export function toolsFor(context: Context): readonly Tool[] {
     ...reviewTools(context),
     undoGradeTool(context),
     remindDueTool(context),
+    ...settingsTools(),
   ];
 }
 
@@ -39,17 +41,22 @@ function addNoteTool({ store, clock }: Context): Tool {
     name: 'add_note',
     description:
       'Add one Note to a Deck, and make its Cards. The Deck is created when no Deck has this ' +
-      'name in any letter case. A "basic" Note has the Fields Front and Back, written in ' +
-      'Markdown, and makes one Card. Answers the Note\'s id, its Deck as kept, and how many ' +
-      'Cards it made.',
+      'name in any letter case. Fields are written in Markdown. A "basic" Note has the Fields ' +
+      'Front and Back and makes one Card. A "reversed" (Basic and reversed) Note has the same ' +
+      'Fields and makes two: Front to Back and Back to Front. A "cloze" Note has the Fields ' +
+      'Text and Extra (optional); Text holds gaps written as in Anki, {{c1::answer}} or ' +
+      '{{c1::answer::hint}}, and it makes one Card for each gap number. Answers the Note\'s id, ' +
+      'its Deck as kept, and how many Cards it made.',
     inputSchema: {
       type: 'object',
       properties: {
         deck: { type: 'string', description: 'The name of the Deck, such as "Japanese N4 vocabulary".' },
-        noteType: { type: 'string', enum: ['basic'], description: 'The Note Type.' },
+        noteType: { type: 'string', enum: ['basic', 'reversed', 'cloze'], description: 'The Note Type.' },
         fields: {
           type: 'object',
-          description: 'Each Field of the Note Type by name, in Markdown: for "basic", Front and Back.',
+          description:
+            'Each Field of the Note Type by name, in Markdown: Front and Back for "basic" and ' +
+            '"reversed", Text and Extra for "cloze".',
           additionalProperties: { type: 'string' },
         },
         tags: {
@@ -137,7 +144,9 @@ function reviewTools({ store, clock }: Context): readonly Tool[] {
       name: 'next_card',
       description:
         'The next Card of a Review of every Deck, or of the one Deck named: its Deck, which side ' +
-        'it asks, its question and answer in Markdown, and the interval each Grade would give, ' +
+        'or gap it asks ("Basic", "Front to Back", "Back to Front", "Cloze 1"), its question and ' +
+        'answer in Markdown, `extra` when a Cloze Card has Extra to show under the answer, and ' +
+        'the interval each Grade would give, ' +
         'Again first. Answers too how many Cards are left, how many Reviews today has had, and ' +
         'when the next Card is Due. With nothing left, the Card is null. Nothing is saved: a ' +
         'Card shown but not graded stays Due.',
@@ -228,4 +237,37 @@ function remindDueTool({ store, clock }: Context): Tool {
     inputSchema: { type: 'object', properties: {}, required: [] },
     call: async () => told(await remindDue(store, clock())),
   };
+}
+
+// The Plugin Settings: the Daily Limit, for every Deck. The Plugin Page reads
+// and saves them at #settings.
+function settingsTools(): readonly Tool[] {
+  const limit = { type: ['integer', 'null'], minimum: 0, maximum: 9999 } as const;
+  return [
+    {
+      name: 'get_settings',
+      description:
+        'The Plugin Settings: the Daily Limit, the same for every Deck. newCardsPerDay is the most ' +
+        'New Cards one day shows (20 when not set), and reviewsPerDay the most Reviews of other ' +
+        'Cards (200 when not set). A day starts at 4:00 local time.',
+      inputSchema: { type: 'object', properties: {}, required: [] },
+      call: () => told(readSettings()),
+    },
+    {
+      name: 'update_settings',
+      description:
+        'Save the Plugin Settings. Each is a whole number from 0 to 9999; a setting left out keeps ' +
+        'its value, and null puts back its default. A value out of range is refused, and nothing ' +
+        'is saved. Answers the Settings as get_settings does.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          newCardsPerDay: { ...limit, description: 'The most New Cards one day shows, across all Decks.' },
+          reviewsPerDay: { ...limit, description: 'The most Reviews of other Cards one day shows, across all Decks.' },
+        },
+        required: [],
+      },
+      call: (given) => told(updateSettings(given)),
+    },
+  ];
 }

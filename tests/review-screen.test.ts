@@ -137,6 +137,38 @@ test('an Extra Field shows under the answer', () => {
   assert.match(html, /<div class="extra"><p>べんきょう, benkyō<\/p><\/div>/);
 });
 
+// Basic and reversed and Cloze: the Card head names the side or gap it asks.
+
+test('a Cloze Card names its Deck and its gap, asks with the gap hidden, and answers the Text with the gap marked, then Extra', () => {
+  const card: Card = {
+    id: 9,
+    deck: 'Portuguese irregular verbs',
+    side: 'Cloze 1',
+    question: 'Ontem eu [fazer] o jantar.',
+    answer: 'Ontem eu **fiz** o jantar.',
+    extra: 'fazer, pretérito perfeito, eu',
+    intervals: ['<1m', '10m', '1d', '4d'],
+  };
+
+  const asked = reviewMarkup({ ...next, card }, { shown: false, marks: [] }, false);
+  const answered = reviewMarkup({ ...next, card }, { shown: true, marks: [] }, false);
+
+  assert.match(asked, /<div class="card-head"><span>Portuguese irregular verbs<\/span><span>Cloze 1<\/span><\/div>/);
+  assert.match(asked, /<div class="front"><p>Ontem eu \[fazer\] o jantar\.<\/p><\/div>/);
+  assert.match(
+    answered,
+    /<div class="answer"><div class="main"><p>Ontem eu <strong>fiz<\/strong> o jantar\.<\/p><\/div><div class="extra"><p>fazer, pretérito perfeito, eu<\/p><\/div><\/div>/,
+  );
+});
+
+test('the reverse Card of a Basic and reversed Note names its side', () => {
+  const card: Card = { ...benkyou, side: 'Back to Front', question: 'study', answer: '勉強' };
+
+  const html = reviewMarkup({ ...next, card }, { shown: false, marks: [] }, false);
+
+  assert.match(html, /<div class="card-head"><span>Japanese N4 vocabulary<\/span><span>Back to Front<\/span><\/div>/);
+});
+
 test('a CJK question reads at the mock’s CJK size; a long question steps down', () => {
   assert.equal(frontClass('勉強'), 'jp');
   assert.equal(frontClass('駅まで歩きます。'), 'jp');

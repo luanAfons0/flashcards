@@ -11,15 +11,16 @@
  *      due time, as Anki learns ahead: so a Card graded Again comes back in
  *      the same Review once nothing else is left, rather than ending it.
  *
- * The Daily Limit caps groups 2 and 3, and only those: a Card graded Again
- * today comes back without counting again.
+ * The Daily Limit caps the queue, across Decks: each Card counts once a day,
+ * the first time a day shows it, so a Card graded Again today comes back
+ * without counting again (see `capped`).
  *
  * Nothing is written until a Grade, so a Card shown but not graded stays
  * Due. A Grade is saved at once, in one transaction, as a Review that keeps
  * the Card's whole state from before it.
  */
 import { NEW_STATE } from './cards.ts';
-import { reviewsToday } from './daily-limit.ts';
+import { capped, reviewsToday } from './daily-limit.ts';
 import { badInput } from './mcp.ts';
 import { noteTypeOf, type Fields } from './note-types.ts';
 import { graded, intervalText, previewed, STATE_COLUMNS, type CardState } from './schedule.ts';
@@ -73,12 +74,12 @@ const LEARNING = `cards.state IN (1, 3)`;
 export function reviewQueue(store: Store, scope: Scope, now: Date): readonly QueuedCard[] {
   const at = now.toISOString();
   const ahead = new Date(now.getTime() + LEARN_AHEAD_MS).toISOString();
-  return [
+  return capped(store, [
     ...group(store, scope, `${LEARNING} AND cards.due <= :at`, 'cards.due, cards.id', { at }),
     ...group(store, scope, `cards.state = 2 AND cards.due <= :at`, 'cards.due, cards.id', { at }),
     ...group(store, scope, `cards.state = ${NEW_STATE}`, 'notes.created_at, notes.id, cards.ordinal', {}),
     ...group(store, scope, `${LEARNING} AND cards.due > :at AND cards.due <= :ahead`, 'cards.due, cards.id', { at, ahead }),
-  ];
+  ], now);
 }
 
 /** The Card a Review of this scope shows next, and what the Review has left. */

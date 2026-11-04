@@ -23,6 +23,7 @@ const WEB = join(REPOSITORY, 'web');
 const PAGES = [
   { page: 'index.html', script: 'app.js' },
   { page: 'index.html', script: 'study.js' },
+  { page: 'index.html', script: 'settings.js' },
   { page: 'popup.html', script: 'popup.js' },
   { page: 'popup.html', script: 'study.js' },
 ];
