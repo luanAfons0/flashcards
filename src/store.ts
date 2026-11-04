@@ -64,6 +64,29 @@ const STEPS: readonly string[] = [
   );
   CREATE INDEX cards_by_due ON cards (due);
   `,
+  // A Review is one Grade of one Card: the Grade (1 Again, 2 Hard, 3 Good,
+  // 4 Easy), when it was given, and the Card's whole FSRS state from before
+  // it, in the same columns as `cards`, so Undo can copy them back. What a day
+  // has shown is counted from here. Deleting a Card deletes its Reviews.
+  `
+  CREATE TABLE reviews (
+    id INTEGER PRIMARY KEY,
+    card_id INTEGER NOT NULL REFERENCES cards (id) ON DELETE CASCADE,
+    grade INTEGER NOT NULL,
+    reviewed_at TEXT NOT NULL,
+    due TEXT NOT NULL,
+    stability REAL NOT NULL,
+    difficulty REAL NOT NULL,
+    state INTEGER NOT NULL,
+    reps INTEGER NOT NULL,
+    lapses INTEGER NOT NULL,
+    scheduled_days INTEGER NOT NULL,
+    learning_step INTEGER NOT NULL,
+    last_review TEXT
+  );
+  CREATE INDEX reviews_by_time ON reviews (reviewed_at);
+  CREATE INDEX reviews_by_card ON reviews (card_id);
+  `,
 ];
 
 /** Open `flashcards.db`, and bring it up to the current version. */

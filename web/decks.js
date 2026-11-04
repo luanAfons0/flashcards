@@ -68,7 +68,7 @@ function deckRow(deck, now) {
     ? '<td class="n band">' + deck.due + '</td>'
     : '<td class="n"><span class="fig zero">0</span></td>';
   const study = deck.due > 0 || deck.new > 0
-    ? '<button type="button" class="btn ghost">Study</button>'
+    ? '<button type="button" class="btn ghost" data-study="' + name + '">Study</button>'
     : '<button type="button" class="btn ghost" disabled>Study</button>';
   return '<tr>' +
     '<td><div class="deck-name">' + name + '</div><div class="deck-meta">' + meta + '</div></td>' +

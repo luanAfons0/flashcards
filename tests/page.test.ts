@@ -20,7 +20,10 @@ const REPOSITORY = dirname(dirname(fileURLToPath(import.meta.url)));
 const WEB = join(REPOSITORY, 'web');
 
 /** Every page in web/, and the scripts of its own that reach for its elements. */
-const PAGES = [{ page: 'index.html', script: 'app.js' }];
+const PAGES = [
+  { page: 'index.html', script: 'app.js' },
+  { page: 'index.html', script: 'study.js' },
+];
 
 /** Every `href` and `src` the page names, in the order it names them. */
 function pathsIn(html: string): string[] {
@@ -200,4 +203,34 @@ test('decks.js, which draws the Deck rows, is pure, so it runs in node:vm as ser
 
   assert.ok(!/\b(?:document|window|fetch|location)\b/.test(code), 'decks.js reaches for the page');
   assert.ok(pathsIn(await served('index.html')).indexOf('decks.js') < pathsIn(await served('index.html')).indexOf('app.js'));
+});
+
+test('review.js and markdown.js, which draw a Review, are pure, and load in the order they need', async () => {
+  const paths = pathsIn(await served('index.html'));
+
+  for (const name of ['review.js', 'markdown.js']) {
+    assert.ok(!/\b(?:document|window|fetch|location)\b/.test(await served(name)), `${name} reaches for the page`);
+  }
+  const order = ['rpc.js', 'markdown.js', 'decks.js', 'review.js', 'study.js', 'app.js'];
+  assert.deepEqual(paths.filter((path) => order.includes(path)), order);
+});
+
+test('the Review view holds the Card, and "Nothing Due" in the mock’s words with the way back', async () => {
+  const html = await served('index.html');
+  const view = /<section id="review-view"[\s\S]*?<\/section>/.exec(html)?.[0] ?? '';
+  const done = /<div class="done-box">[\s\S]*?<\/div>/.exec(view)?.[0] ?? '';
+
+  assert.match(view, /<h1 id="h-review" class="sr">Review<\/h1>/);
+  assert.match(view, /<div class="review" id="review-main"><\/div>/);
+  assert.match(done, /<h2 id="h-done">Nothing Due<\/h2>/);
+  assert.match(done, /<p class="quiet num" id="done-line"><\/p>/);
+  assert.match(done, /<a class="btn" href="#decks">.*Back to Decks<\/a>/);
+});
+
+test('the Review has no motion, and the page bar goes faint in it', async () => {
+  const css = await served('app.css');
+
+  assert.match(css, /\.review \.btn, \.review \.btn:active, \.review \.grade \{ transition: none; transform: none; \}/);
+  assert.match(css, /\.page\[data-mode="review"\] \.bar \{ opacity: \.38; \}/);
+  assert.match(await served('app.js'), /byId\('page'\)\.dataset\.mode = route === ROUTES\.review \? 'review' : ''/);
 });

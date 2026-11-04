@@ -8,9 +8,10 @@
 import type { Clock } from './clock.ts';
 import { dailyLimit, today } from './daily-limit.ts';
 import { checkDeckName, contentsOf, deleteDeck, existingDeck, summaries } from './decks.ts';
-import { told, type Tool } from './mcp.ts';
+import { badInput, told, type Tool } from './mcp.ts';
 import { noteTypeOf } from './note-types.ts';
 import { addNote, checkFields, checkNoteType, checkTags } from './notes.ts';
+import { gradeCard, nextCard } from './review.ts';
 import { within, type Store } from './store.ts';
 
 /** What the tools work with: the data, and the time it is now. */
@@ -21,7 +22,7 @@ export type Context = {
 
 /** The tools, bound to this Store and this Clock. */
 export function toolsFor(context: Context): readonly Tool[] {
-  return [addNoteTool(context), listDecks(context), countDeck(context), deleteDeckTool(context)];
+  return [addNoteTool(context), listDecks(context), countDeck(context), deleteDeckTool(context), ...reviewTools(context)];
 }
 
 function addNoteTool({ store, clock }: Context): Tool {
@@ -117,4 +118,57 @@ function deleteDeckTool({ store }: Context): Tool {
       return told(within(store, () => deleteDeck('delete_deck', store, deck)));
     },
   };
+}
+
+// The Review: the Plugin Page and the Popup ask for the next Card, then
+// grade it, one Card at a time.
+function reviewTools({ store, clock }: Context): readonly Tool[] {
+  return [
+    {
+      name: 'next_card',
+      description:
+        'The next Card of a Review of every Deck, or of the one Deck named: its Deck, which side ' +
+        'it asks, its question and answer in Markdown, and the interval each Grade would give, ' +
+        'Again first. Answers too how many Cards are left, how many Reviews today has had, and ' +
+        'when the next Card is Due. With nothing left, the Card is null. Nothing is saved: a ' +
+        'Card shown but not graded stays Due.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          deck: { type: 'string', description: 'The name of one Deck to study. Leave it out to study every Deck.' },
+        },
+        required: [],
+      },
+      call: (given) => {
+        const deck = given['deck'] === undefined
+          ? null
+          : existingDeck('next_card', store, checkDeckName('next_card', given['deck'])).id;
+        return told(nextCard(store, { deckId: deck }, clock()));
+      },
+    },
+    {
+      name: 'grade_card',
+      description:
+        'Grade one Card, as next_card showed it: 1 Again, 2 Hard, 3 Good or 4 Easy. The Grade ' +
+        'is saved at once as a Review, and FSRS schedules the Card. Answers the Card, its Grade ' +
+        'and when it is Due next.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          card: { type: 'integer', description: 'The id of the Card, as next_card answered it.' },
+          grade: { type: 'integer', enum: [1, 2, 3, 4], description: '1 Again, 2 Hard, 3 Good or 4 Easy.' },
+        },
+        required: ['card', 'grade'],
+      },
+      call: (given) => {
+        const card = given['card'];
+        if (!Number.isInteger(card)) throw badInput('grade_card needs "card" as the id of a Card, as next_card answered it.');
+        const grade = given['grade'];
+        if (!Number.isInteger(grade) || (grade as number) < 1 || (grade as number) > 4) {
+          throw badInput('grade_card needs "grade" as 1 (Again), 2 (Hard), 3 (Good) or 4 (Easy).');
+        }
+        return told(gradeCard(store, card as number, grade as number, clock()));
+      },
+    },
+  ];
 }

@@ -16,11 +16,24 @@ export type NoteType = {
   readonly fields: readonly string[];
   /** The ordinal of each Card a Note with these Fields makes, in order. */
   ordinals(fields: Fields): readonly number[];
+  /** What the Card with this ordinal asks and answers. */
+  card(fields: Fields, ordinal: number): CardFace;
 };
+
+/**
+ * What one Card shows in a Review: which side or gap it asks, as its head
+ * names it, and its question and answer in Markdown.
+ */
+export type CardFace = { readonly side: string; readonly question: string; readonly answer: string };
 
 /** Every Note Type, by the key a caller names it with. */
 export const NOTE_TYPES: Readonly<Record<string, NoteType>> = {
-  basic: { name: 'Basic', fields: ['Front', 'Back'], ordinals: () => [1] },
+  basic: {
+    name: 'Basic',
+    fields: ['Front', 'Back'],
+    ordinals: () => [1],
+    card: (fields) => ({ side: 'Basic', question: fields['Front'] ?? '', answer: fields['Back'] ?? '' }),
+  },
 };
 
 /** The Note Type a caller named, or undefined for one there is not. */
