@@ -16,6 +16,8 @@ export type ListedDeck = {
   readonly new: number;
   readonly due: number;
   readonly nextDue: string | null;
+  /** How many Cards a Review of this Deck alone shows now. */
+  readonly left: number;
 };
 
 /** What `list_decks` answers. */

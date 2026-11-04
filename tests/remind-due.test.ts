@@ -12,7 +12,7 @@ import { strict as assert } from 'node:assert';
 import test, { type TestContext } from 'node:test';
 import { addBasic, refusalOf } from './helpers/cards.ts';
 import { type Answer, type Started, startedAndShaken, structureOf } from './helpers/plugin.ts';
-import { at, GOOD, gradeNext } from './helpers/review.ts';
+import { at, EASY, GOOD, gradeNext } from './helpers/review.ts';
 
 /** What `remind_due` answers. */
 type Reminded = {
@@ -125,4 +125,20 @@ test('long Deck names are cut, so the body stays inside the 200 characters the H
   const body = String(params['body']);
   assert.ok([...body].length <= 200, `the body is ${[...body].length} characters: ${body}`);
   assert.match(body, /^First very long name .*… 2, Second very long .*… 1, Third very long .*… 1$/);
+});
+
+test('the Notice counts only the Due Cards the Daily Limit lets in today', async (t) => {
+  // Easy on a New Card at the fixed clock makes it Due from 2026-11-12T04:00.
+  const first = await startedAndShaken(t);
+  assert.equal((await first.call('update_settings', { reviewsPerDay: 2 })).error, undefined);
+  await addBasic(first, 'Rust ownership', 'Question 1', 'Answer 1');
+  await addBasic(first, 'AWS Solutions Architect', 'Question 1', 'Answer 1');
+  await addBasic(first, 'Rust ownership', 'Question 2', 'Answer 2');
+  for (let card = 0; card < 3; card += 1) await gradeNext(first, EASY);
+  const plugin = await at(t, first, '2026-11-12T10:00:00.000Z');
+
+  const { params, answer } = await remindAnswered(plugin, { result: {} });
+
+  assert.deepEqual(params, { title: '2 Cards are Due', body: 'AWS Solutions Architect 1, Rust ownership 1' });
+  assert.equal(structureOf<Reminded>(answer).due, 2);
 });

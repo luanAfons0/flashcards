@@ -21,7 +21,7 @@ const ROUTES = {
   review: { view: 'review-view', tab: null, draw: drawStudy },
   notes: { view: 'notes-view', tab: 'notes', draw: null },
   add: { view: 'editor-view', tab: 'notes', draw: null },
-  settings: { view: 'settings-view', tab: 'settings', draw: null },
+  settings: { view: 'settings-view', tab: 'settings', draw: drawSettings },
 };
 
 /** The route the address names; an address that names none is the Decks view. */
@@ -43,6 +43,7 @@ async function show() {
   // The page bar goes faint in a Review, and a Review left by any way ends.
   byId('page').dataset.mode = route === ROUTES.review ? 'review' : '';
   if (route !== ROUTES.review) endReview();
+  if (route !== ROUTES.settings) leaveSettings();
   say('');
   if (route.draw === null) return;
   try {
@@ -157,6 +158,12 @@ document.addEventListener('keydown', (event) => {
   if (byId('decks-view').hidden || byId('study-all').hidden || confirming !== null) return;
   event.preventDefault();
   location.hash = '#review';
+});
+
+// The Settings: settings.js saves the form; a change to a field takes Saved away.
+byId('settings-form').addEventListener('submit', saveSettings);
+byId('settings-form').addEventListener('input', () => {
+  byId('saved').hidden = true;
 });
 
 /** Say one sentence in the banner, or clear it with none. */

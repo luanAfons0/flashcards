@@ -3,11 +3,13 @@
  *
  * A Deck name is unique without regard to letter case, and it keeps the case
  * it was first written in. Decks do not nest: `Languages::Japanese` is one
- * name. `list_decks` reads every Deck here with its counts for today, and
+ * name. `list_decks` and `remind_due` read every Deck here with its counts
+ * for today, the Daily Limit applied, and
  * `count_deck` and `delete_deck` count and delete one Deck with all it holds.
  */
-import { IS_DUE, IS_NEW } from './cards.ts';
+import { IS_NEW, NEW_STATE } from './cards.ts';
 import { badInput } from './mcp.ts';
+import { reviewQueue } from './review.ts';
 import type { Store } from './store.ts';
 
 /** One Deck with what it holds and what it has for today. */
@@ -17,12 +19,18 @@ export type DeckSummary = {
   readonly notes: number;
   /** How many Cards those Notes make. */
   readonly cards: number;
-  /** How many New Cards it has. */
+  /** How many of its New Cards a Review of every Deck shows today, the Daily Limit applied. */
   readonly new: number;
-  /** How many Cards are Due now. */
+  /** How many of its Cards Due now a Review of every Deck shows today, the Daily Limit applied. */
   readonly due: number;
   /** When its next Card that is not Due yet becomes Due, or null when none is waiting. */
   readonly nextDue: string | null;
+  /**
+   * How many Cards a Review of this Deck alone shows now: what the Daily
+   * Limit lets in, and a Card in a learning step that it learns ahead. Study
+   * is offered when it is above 0.
+   */
+  readonly left: number;
 };
 
 /** The Deck name a caller gave, without the spaces around it, or a refusal. */
@@ -41,15 +49,18 @@ export function deckNamed(store: Store, name: string, now: Date): { readonly id:
   return store.prepare('SELECT id, name FROM decks WHERE name = ?').get(name) as { id: number; name: string };
 }
 
-/** Every Deck, by name, with its counts at this time. */
+/**
+ * Every Deck, by name, with its counts at this time. The New and Due counts
+ * share what is left of the Daily Limit out among the Decks, in the order a
+ * Review of every Deck shows their Cards, so they add up to what that Review
+ * shows, and never to more than the limit.
+ */
 export function summaries(store: Store, now: Date): readonly DeckSummary[] {
   const rows = store
     .prepare(
-      `SELECT decks.name AS name,
+      `SELECT decks.id AS id, decks.name AS name,
               COUNT(DISTINCT notes.id) AS notes,
               COUNT(cards.id) AS cards,
-              COUNT(CASE WHEN ${IS_NEW} THEN 1 END) AS new,
-              COUNT(CASE WHEN ${IS_DUE} THEN 1 END) AS due,
               MIN(CASE WHEN NOT (${IS_NEW}) AND cards.due > :now THEN cards.due END) AS nextDue
          FROM decks
          LEFT JOIN notes ON notes.deck_id = decks.id
@@ -57,8 +68,18 @@ export function summaries(store: Store, now: Date): readonly DeckSummary[] {
         GROUP BY decks.id
         ORDER BY decks.name COLLATE NOCASE`,
     )
-    .all({ now: now.toISOString() }) as DeckSummary[];
-  return rows.map((row) => ({ ...row }));
+    .all({ now: now.toISOString() }) as (Omit<DeckSummary, 'new' | 'due' | 'left'> & { id: number })[];
+  const at = now.toISOString();
+  const shown = reviewQueue(store, { deckId: null }, now);
+  return rows.map(({ id, ...row }) => ({
+    name: row.name,
+    notes: row.notes,
+    cards: row.cards,
+    new: shown.filter((card) => card.deck === row.name && card.state === NEW_STATE).length,
+    due: shown.filter((card) => card.deck === row.name && card.state !== NEW_STATE && card.due <= at).length,
+    nextDue: row.nextDue,
+    left: reviewQueue(store, { deckId: id }, now).length,
+  }));
 }
 
 /** What one Deck holds, as the confirm before deleting it names it. */
