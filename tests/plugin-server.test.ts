@@ -12,6 +12,7 @@ import { PROTOCOL_VERSION, startedAndShaken, startPluginServer } from './helpers
 const TOOLS = [
   'add_note', 'count_deck', 'delete_deck', 'grade_card', 'list_decks', 'next_card', 'remind_due', 'undo_grade',
   'get_settings', 'update_settings',
+  'list_notes', 'get_note', 'update_note', 'delete_note',
 ];
 
 test('the Plugin Server answers the handshake', async (t) => {

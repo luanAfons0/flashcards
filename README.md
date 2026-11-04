@@ -113,6 +113,31 @@ Press the Shortcut anywhere on the desktop to show it. Space shows the answer,
 focus. Every Grade is saved the moment you give it, so hiding the Popup loses
 nothing.
 
+## Find and edit Notes
+
+Notes, in the top bar, lists the Notes of one Deck (`/p/flashcards/#notes`),
+each with its first Field, its Note Type, its Tags and when it is next Due. A
+Deck row's Notes button opens that Deck's list. Type words to find the Notes
+that hold all of them in any Field or Tag, and press Tags to keep only the
+Notes with every Tag pressed. Click a Note, or press Enter on it, to edit it in
+the Note editor. A change to a Field keeps every Card's schedule. Taking out a
+Cloze gap number deletes its Card and that Card's Reviews, and a new gap
+number makes a New Card. Basic to Basic and reversed makes the reverse Card,
+and the change back deletes it. A Note never changes to or from Cloze.
+
+Other Plugins and the Mate can do the same with the tools:
+
+- `list_notes({ deck, search?, tags? })` answers `{ deck, total, tags, notes, now }`,
+  each Note as `{ id, noteType, fields, tags, nextDue }`.
+- `get_note({ id })` answers `{ id, deck, noteType, fields, tags, cards }`,
+  each Card as `{ id, ordinal, side, due, reviews }`.
+- `update_note({ id, deck, noteType, fields, tags? })` answers
+  `{ id, deck, cards, added, deleted }`, the ordinals of the Cards it made and
+  deleted.
+- `delete_note({ id })` deletes one Note with its Cards and their Reviews, and
+  answers `{ id, deck, cards, reviews }`. The Plugin Page has no Delete Note
+  yet.
+
 ## What it needs
 
 Node 24 or newer, for TypeScript with no build step and for `node:sqlite`. The

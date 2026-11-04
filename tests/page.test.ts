@@ -25,6 +25,7 @@ const PAGES = [
   { page: 'index.html', script: 'study.js' },
   { page: 'index.html', script: 'settings.js' },
   { page: 'index.html', script: 'note-editor.js' },
+  { page: 'index.html', script: 'notes-view.js' },
   { page: 'popup.html', script: 'popup.js' },
   { page: 'popup.html', script: 'study.js' },
 ];

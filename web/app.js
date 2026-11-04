@@ -1,8 +1,9 @@
 /* The Plugin Page: the top bar and its views, chosen by the address fragment.
 
    #decks (or no fragment) is the Decks view, #review a Review of every Deck
-   and #review/<Deck> of one, #notes the Notes, #add the Note editor, and
-   #settings the Plugin Settings (FirstMate ADR-0029). The Host's
+   and #review/<Deck> of one, #notes the Notes and #notes/<Deck> those of one
+   Deck, #add the Note editor for a new Note and #edit/<id> for one that is
+   there, and #settings the Plugin Settings (FirstMate ADR-0029). The Host's
    "Open settings" changes only the fragment of a page already open, so the
    view follows every hashchange as well as the address it loads with.
 
@@ -19,8 +20,9 @@ function byId(id) {
 const ROUTES = {
   decks: { view: 'decks-view', tab: 'decks', draw: drawDecks },
   review: { view: 'review-view', tab: null, draw: drawStudy },
-  notes: { view: 'notes-view', tab: 'notes', draw: null },
+  notes: { view: 'notes-view', tab: 'notes', draw: drawNotes },
   add: { view: 'editor-view', tab: 'notes', draw: () => drawEditor(null) },
+  edit: { view: 'editor-view', tab: 'notes', draw: drawEdit },
   settings: { view: 'settings-view', tab: 'settings', draw: drawSettings },
 };
 
@@ -124,7 +126,7 @@ byId('deck-rows').addEventListener('keydown', (event) => {
    #review, a Deck row's Study opens #review/<Deck>, and study.js runs the
    Review. Esc there comes back to the Decks. */
 
-/** The Deck a Review address names, or null for a Review of every Deck. */
+/** The Deck a Review or Notes address names, or null for every Deck, or the Deck shown last. */
 function deckOf(hash) {
   const at = hash.indexOf('/');
   if (at < 0) return null;
@@ -169,6 +171,9 @@ byId('settings-form').addEventListener('input', () => {
 
 // The Note editor: note-editor.js wires its form, Fields and Tags.
 wireEditor();
+
+// The Notes: notes-view.js wires the search, the Tag filter and the rows.
+wireNotes();
 
 /** Say one sentence in the banner, or clear it with none. */
 function say(sentence) {
