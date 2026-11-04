@@ -47,10 +47,19 @@ async function show() {
   }
 }
 
-/** The Decks view. With no Deck yet, it says how one appears. */
+/**
+ * The Decks view: one ruled row for each Deck, "Study all Due" with the
+ * total, and the today line. With no Deck yet, it says how one appears.
+ */
 async function drawDecks() {
   const listed = await call('list_decks');
-  byId('decks-empty').hidden = listed.decks.length > 0;
+  const some = listed.decks.length > 0;
+  byId('decks-empty').hidden = some;
+  byId('decks-sheet').hidden = !some;
+  byId('study-all').hidden = !some;
+  byId('study-total').textContent = String(totalDue(listed.decks));
+  byId('deck-rows').innerHTML = listed.decks.map((deck) => deckRow(deck, listed.now)).join('');
+  byId('today-line').textContent = todayLine(listed.today, listed.limit);
 }
 
 /** Say one sentence in the banner, or clear it with none. */

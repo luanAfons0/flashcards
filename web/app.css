@@ -99,6 +99,8 @@ p { margin: 0; }
 .btn.primary { background: var(--ink); color: var(--stock); border-color: var(--ink); }
 
 .btn.ghost { border-color: transparent; background: transparent; color: var(--ink-2); }
+/* A disabled ghost, such as Study on a Deck with nothing to study, reads as disabled too. */
+.btn.ghost[disabled] { color: var(--ink-3); }
 
 .btn.danger { background: var(--danger); border-color: var(--danger); color: var(--stock); }
 .btn.icon { padding: 0; width: 34px; }

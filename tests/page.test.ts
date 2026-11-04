@@ -176,3 +176,28 @@ test('no mock scaffolding ships: no switcher bar and no sample data markers', as
     assert.ok(!text.includes('tag-sample') && !/sample data/i.test(text), `${name} still marks sample data`);
   }
 });
+
+test('the Decks screen is one ruled sheet with the mock’s columns, "Study all Due" and the today line', async () => {
+  const html = await served('index.html');
+  const view = /<section id="decks-view"[\s\S]*?<\/section>/.exec(html)?.[0] ?? '';
+  const sheet = /<div class="sheet" id="decks-sheet"[\s\S]*?<\/table>/.exec(view)?.[0] ?? '';
+
+  assert.match(
+    view,
+    /<button type="button" class="btn primary" id="study-all" hidden>Study all Due <span class="num" id="study-total">0<\/span> <kbd>S<\/kbd><\/button>/,
+  );
+  assert.match(sheet, /<caption class="sr">Decks with their New Cards and Due Cards for today<\/caption>/);
+  assert.deepEqual(
+    [...sheet.matchAll(/<th[^>]*>([\s\S]*?)<\/th>/g)].map((found) => shown(found[1] ?? '')),
+    ['Deck', 'New', 'Due', 'Actions'],
+  );
+  assert.match(sheet, /<tbody id="deck-rows"><\/tbody>/);
+  assert.match(view, /<div class="sheet-foot">\s*<span class="num" id="today-line"><\/span>/);
+});
+
+test('decks.js, which draws the Deck rows, is pure, so it runs in node:vm as served', async () => {
+  const code = await served('decks.js');
+
+  assert.ok(!/\b(?:document|window|fetch|location)\b/.test(code), 'decks.js reaches for the page');
+  assert.ok(pathsIn(await served('index.html')).indexOf('decks.js') < pathsIn(await served('index.html')).indexOf('app.js'));
+});

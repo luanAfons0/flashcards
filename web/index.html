@@ -43,7 +43,20 @@
     <!-- Decks -->
     <section id="decks-view" aria-labelledby="h-decks" hidden>
       <div class="col">
-        <div class="head"><h1 id="h-decks">Decks</h1></div>
+        <div class="head">
+          <h1 id="h-decks">Decks</h1>
+          <button type="button" class="btn primary" id="study-all" hidden>Study all Due <span class="num" id="study-total">0</span> <kbd>S</kbd></button>
+        </div>
+        <div class="sheet" id="decks-sheet" hidden>
+          <table>
+            <caption class="sr">Decks with their New Cards and Due Cards for today</caption>
+            <thead><tr><th scope="col">Deck</th><th scope="col" class="n">New</th><th scope="col" class="n">Due</th><th scope="col"><span class="sr">Actions</span></th></tr></thead>
+            <tbody id="deck-rows"></tbody>
+          </table>
+          <div class="sheet-foot">
+            <span class="num" id="today-line"></span>
+          </div>
+        </div>
         <div class="empty" id="decks-empty" hidden>
           <h2 id="h-empty">No Decks yet</h2>
           <p>A Deck appears when you add its first Note. Other Plugins and the Mate can add Notes too, through the <code>add_note</code> tool.</p>
@@ -76,6 +89,7 @@
 </div>
 
 <script src="rpc.js"></script>
+<script src="decks.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

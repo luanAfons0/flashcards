@@ -9,7 +9,7 @@ import test from 'node:test';
 import { PROTOCOL_VERSION, startedAndShaken, startPluginServer } from './helpers/plugin.ts';
 
 /** Every tool flashcards ships. The names are the contract with the Page and its callers. */
-const TOOLS = ['list_decks'];
+const TOOLS = ['add_note', 'list_decks'];
 
 test('the Plugin Server answers the handshake', async (t) => {
   const plugin = await startPluginServer(t);
