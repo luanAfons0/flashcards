@@ -11,6 +11,7 @@ import { checkDeckName, contentsOf, deleteDeck, existingDeck, summaries } from '
 import { badInput, told, type Tool } from './mcp.ts';
 import { noteTypeOf } from './note-types.ts';
 import { addNote, checkFields, checkNoteType, checkTags } from './notes.ts';
+import { remindDue } from './reminder.ts';
 import { gradeCard, nextCard, undoGrade } from './review.ts';
 import { within, type Store } from './store.ts';
 
@@ -22,7 +23,15 @@ export type Context = {
 
 /** The tools, bound to this Store and this Clock. */
 export function toolsFor(context: Context): readonly Tool[] {
-  return [addNoteTool(context), listDecks(context), countDeck(context), deleteDeckTool(context), ...reviewTools(context), undoGradeTool(context)];
+  return [
+    addNoteTool(context),
+    listDecks(context),
+    countDeck(context),
+    deleteDeckTool(context),
+    ...reviewTools(context),
+    undoGradeTool(context),
+    remindDueTool(context),
+  ];
 }
 
 function addNoteTool({ store, clock }: Context): Tool {
@@ -202,5 +211,21 @@ function undoGradeTool({ store, clock }: Context): Tool {
         : existingDeck('undo_grade', store, checkDeckName('undo_grade', given['deck'])).id;
       return told(undoGrade(store, review as number, { deckId: deck }, clock()));
     },
+  };
+}
+
+// The reminder: the scheduler Plugin, or any caller, asks for one Notice
+// when Cards are Due.
+function remindDueTool({ store, clock }: Context): Tool {
+  return {
+    name: 'remind_due',
+    description:
+      'Send the operator one Notice when Cards are Due, such as "12 Cards are Due", naming up ' +
+      'to three Decks with their counts; a click on it opens the Plugin Page. With nothing Due ' +
+      'it sends nothing. Answers how many Cards are Due, the Notice sent (null when none was), ' +
+      'and that in one sentence. A refusal from the Host, such as its one Notice every 5 s, ' +
+      'comes back as the error.',
+    inputSchema: { type: 'object', properties: {}, required: [] },
+    call: async () => told(await remindDue(store, clock())),
   };
 }

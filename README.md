@@ -8,6 +8,74 @@ Due, New Card, Daily Limit) are defined in [`CONTEXT.md`](CONTEXT.md). The
 FirstMate words (Host, Plugin, Plugin Page, Plugin Server, Popup, Notice,
 Grant, Stopped) are FirstMate's own.
 
+## Install it
+
+One command, from its git URL. The files land in FirstMate's Shelf, the Plugin
+is registered in the same step, and nothing it ships is run:
+
+```sh
+firstmate install https://github.com/luanAfons0/flashcards.git flashcards
+systemctl --user restart firstmate
+```
+
+Then open the Index Page, find `flashcards`, and open its Plugin Page.
+
+`install` fetches the newest Plugin Release. It holds one `mcp.js` with
+`ts-fsrs` inside it, so there is no `npm install`. To take a newer one:
+
+```sh
+firstmate update flashcards
+```
+
+`update` replaces the Release Files and keeps every other file, so your Decks
+in `flashcards.db` and your `settings.json` stay as they are.
+
+## Let another Plugin add Notes
+
+Other Plugins and the Mate add Notes with the `add_note` tool. The Host lets
+a caller do that only under a Grant. A Grant is one way and covers one pair,
+and it covers every tool of flashcards. Record one for each caller, then
+restart:
+
+```sh
+firstmate grant <caller> flashcards
+systemctl --user restart firstmate
+```
+
+`add_note` takes a Deck name, a Note Type (`basic`, `reversed` or `cloze`), the
+Fields as an object, and optional Tags. It makes the Deck if there is none
+with that name.
+
+## Get a Notice when Cards are Due
+
+flashcards has no timer of its own: FirstMate's Host runs nothing on a timer
+(FirstMate ADR-0004). The `scheduler` Plugin calls `remind_due` at the time you
+choose. `remind_due` sends a Notice such as "12 Cards are Due" when one or more
+Cards are Due today, and a click on it opens the Plugin Page. When no Card is
+Due, it sends nothing.
+
+Record a Grant from `scheduler` to flashcards, and restart:
+
+```sh
+firstmate grant scheduler flashcards
+systemctl --user restart firstmate
+```
+
+Then add a Job on the `scheduler` Plugin Page, or in its `jobs.json`. This one
+reminds you every morning:
+
+```json
+{
+  "name": "flashcards-due",
+  "enabled": true,
+  "when": { "every": "daily", "at": "09:00", "timezone": "America/Sao_Paulo" },
+  "plugin": "flashcards",
+  "tool": "remind_due",
+  "arguments": {},
+  "missedRunGraceMinutes": 120
+}
+```
+
 ## What it needs
 
 Node 24 or newer, for TypeScript with no build step and for `node:sqlite`. The
@@ -74,3 +142,33 @@ a test starts runs at `FLASHCARDS_NOW=2026-11-04T10:00:00.000Z` and `TZ=UTC`
 unless the test gives its own. To move the clock, a test stops the Plugin
 Server and starts another on the same Plugin directory at a later time. No test
 waits for time to pass.
+
+## Publish a Plugin Release
+
+`npm run release` writes the Plugin Release into `release/`, which is
+git-ignored:
+
+- `mcp.js`: `mcp.ts`, `src/` and `ts-fsrs` in one ES module, made by tsdown.
+  It is not minified, so a stack trace stays readable.
+- `web/`: the Plugin Page, as it is.
+- `mcp`: the `sh` wrapper for a `wsl` Place, which runs `mcp.js`.
+
+It holds no `mcp.ts`, because the Host starts `mcp.ts` before `mcp.js`. It
+holds no `flashcards.db` and no `settings.json`, because they are the Plugin's
+data. The Plugin Server is plain JavaScript, so one archive serves every
+platform. `tests/release.test.ts` builds it, starts `mcp.js` in a directory
+with no `node_modules`, and adds a Note and shows its Card.
+
+To publish one, push a tag `vMAJOR.MINOR.PATCH` from the main branch:
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+`.github/workflows/release.yml` then calls FirstMate's reusable
+`plugin-release.yml`. It runs `npm ci && npm run check`, then
+`npm run release`, and uploads the archive of `release/` with its `.sha256` as
+a GitHub Release. If a step fails, there is no Plugin Release. Keep the
+repository public: `install` cannot fetch a Plugin Release of a private one,
+and it clones it instead, with no `node_modules`.
