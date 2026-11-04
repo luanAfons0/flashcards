@@ -115,6 +115,22 @@ test('the released mcp.js schedules a Card with ts-fsrs and no node_modules', as
   assert.ok(existsSync(join(directory, 'flashcards.db')), 'the Plugin kept no flashcards.db');
 });
 
+test('the released mcp.js asks a Cloze with the rule web/cloze.js holds, bundled in', async (t) => {
+  // The Plugin Server imports web/cloze.js; a release that left it out
+  // would make no Cloze Card.
+  const directory = await installed(t);
+  const released = await startedAndShaken(t, { directory, entry: join(directory, 'mcp.js') });
+  const note = { deck: 'Portuguese', noteType: 'cloze', fields: { Text: 'Ontem eu {{c1::fiz::fazer}} o jantar.' } };
+
+  structureOf(await released.call('add_note', note));
+  const next = structureOf<{ card: { side: string; question: string } | null }>(await released.call('next_card'));
+
+  assert.deepEqual(next.card && { side: next.card.side, question: next.card.question }, {
+    side: 'Cloze 1',
+    question: 'Ontem eu [fazer] o jantar.',
+  }, released.output());
+});
+
 test(
   'the mcp wrapper of the Plugin Release runs mcp.js',
   { skip: process.platform === 'win32' ? 'the sh wrapper `mcp` is for a wsl Place' : false },
