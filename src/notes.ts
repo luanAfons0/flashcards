@@ -37,7 +37,8 @@ export function checkNoteType(tool: string, given: unknown): string {
 
 /**
  * The Fields a caller gave for this Note Type, or a refusal. Every Field of
- * the Note Type must be there as text with something in it, and no other.
+ * the Note Type must be there as text with something in it, and no other;
+ * an optional Field may be left out or empty, and is kept as empty text.
  */
 export function checkFields(tool: string, noteType: NoteType, given: unknown): Fields {
   const names = listed(noteType.fields);
@@ -52,11 +53,13 @@ export function checkFields(tool: string, noteType: NoteType, given: unknown): F
   }
   for (const name of noteType.fields) {
     const value = fields[name];
+    const optional = noteType.optional.includes(name);
+    if (value === undefined && optional) continue;
     if (value === undefined) throw badInput(`A ${noteType.name} Note needs its ${name} Field. Its Fields are ${names}.`);
     if (typeof value !== 'string') throw badInput(`The ${name} Field must be text, written in Markdown.`);
-    if (value.trim() === '') throw badInput(`The ${name} Field is empty. Write what it should hold.`);
+    if (value.trim() === '' && !optional) throw badInput(`The ${name} Field is empty. Write what it should hold.`);
   }
-  return Object.fromEntries(noteType.fields.map((name) => [name, fields[name] as string]));
+  return Object.fromEntries(noteType.fields.map((name) => [name, (fields[name] as string | undefined) ?? '']));
 }
 
 /**
@@ -83,7 +86,7 @@ export function addNote(store: Store, note: NewNote, now: Date): AddedNote {
   const noteType = noteTypeOf(note.noteType);
   if (noteType === undefined) throw new Error(`There is no Note Type "${note.noteType}".`);
   const ordinals = noteType.ordinals(note.fields);
-  if (ordinals.length === 0) throw badInput('This Note would make no Card.');
+  if (ordinals.length === 0) throw badInput(noteType.noCard);
   return within(store, () => {
     const deck = deckNamed(store, note.deck, now);
     const time = now.toISOString();
