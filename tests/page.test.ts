@@ -23,6 +23,8 @@ const WEB = join(REPOSITORY, 'web');
 const PAGES = [
   { page: 'index.html', script: 'app.js' },
   { page: 'index.html', script: 'study.js' },
+  { page: 'popup.html', script: 'popup.js' },
+  { page: 'popup.html', script: 'study.js' },
 ];
 
 /** Every `href` and `src` the page names, in the order it names them. */
@@ -233,4 +235,57 @@ test('the Review has no motion, and the page bar goes faint in it', async () => 
   assert.match(css, /\.review \.btn, \.review \.btn:active, \.review \.grade \{ transition: none; transform: none; \}/);
   assert.match(css, /\.page\[data-mode="review"\] \.bar \{ opacity: \.38; \}/);
   assert.match(await served('app.js'), /byId\('page'\)\.dataset\.mode = route === ROUTES\.review \? 'review' : ''/);
+});
+
+test('the Popup is popup.html: the Review alone, with no top bar, loading what it needs in order', async () => {
+  const html = await served('popup.html');
+  const paths = pathsIn(html);
+
+  assert.match(html, /<meta name="color-scheme" content="light dark">/);
+  assert.ok(!html.includes('class="bar"'), 'the Popup has a top bar; it has only a small head with the count');
+  assert.match(html, /<h1 id="h-review" class="sr">Review<\/h1>/);
+  assert.match(html, /<p class="banner" id="banner" role="alert" hidden><\/p>/);
+  assert.match(html, /<div class="popup" id="review-main"><\/div>/);
+  const order = ['app.css', 'rpc.js', 'markdown.js', 'decks.js', 'review.js', 'study.js', 'popup.js'];
+  assert.deepEqual(paths.filter((path) => !path.startsWith('data:') && !path.startsWith('#')), order);
+});
+
+test('with nothing Due, the Popup says so in the mock’s words, and how to hide it', async () => {
+  const html = await served('popup.html');
+  const done = /<div class="popup done" id="review-done" hidden>[\s\S]*?<\/main>/.exec(html)?.[0] ?? '';
+
+  assert.match(done, /<span class="who">flashcards<\/span>/);
+  assert.match(done, /<h2 id="h-done">Nothing Due<\/h2>/);
+  assert.match(done, /<p class="quiet num" id="done-line"><\/p>/);
+  assert.match(done, /<span>Esc closes<\/span>/);
+  assert.ok(!done.includes('href='), 'a link in the Popup only hides it, so it offers none');
+});
+
+test('every icon the Review draws is a symbol the page that shows it declares', async () => {
+  const drawn = [...(await served('review.js')).matchAll(/<use href="#(i-[\w-]+)"/g)].map((found) => found[1] ?? '');
+  const index = await served('index.html');
+  const popup = await served('popup.html');
+
+  // The Plugin Page draws every one; the compact Review has no way back to the Decks, so only Undo's.
+  assert.deepEqual(drawn.sort(), ['i-back', 'i-undo']);
+  for (const icon of drawn) assert.match(index, new RegExp(`<symbol id="${icon}"`), `index.html lacks #${icon}`);
+  assert.match(popup, /<symbol id="i-undo"/);
+});
+
+test('the Popup takes the mock’s compact layout, fluid to the window, with no motion', async () => {
+  const css = await served('app.css');
+
+  // The mock draws the Popup as a 420 by 560 window; the Host's window is its own size, so the page fills it.
+  assert.match(css, /\.popup \{[^}]*height: 100%;/);
+  assert.ok(!/\.popup \{[^}]*(?:420px|560px)/.test(css), 'the Popup is sized by the mock’s frame, not by the window');
+  assert.match(css, /\.popup \.ptop \{ display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px 8px; font-size: 13px; \}/);
+  assert.match(css, /\.popup \.strip \{ margin: 0 14px; height: 6px; \}/);
+  assert.match(css, /\.popup \.card \{[^}]*box-shadow: none;/);
+  assert.match(css, /\.popup \.front\.jp \{ font-size: 44px; \}/);
+  assert.match(css, /\.popup \.grade \{ min-height: 56px; padding: 8px 4px 7px; \}/);
+  assert.match(css, /\.popup \.btn, \.popup \.btn:active, \.popup \.grade \{ transition: none; transform: none; \}/);
+});
+
+test('every tool call is kept alive past the page, so a Grade given as the Popup hides still lands', async () => {
+  assert.match(await served('rpc.js'), /keepalive: body\.length < KEEP_ALIVE_BYTES,/);
 });
