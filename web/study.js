@@ -1,23 +1,26 @@
 /* A Review under way: which Card shows, whether its answer shows, and the
    Grades given so far, with the keys and clicks that move it on.
 
-   It asks next_card for each Card and grade_card for each Grade, and saves
-   nothing of its own: every Grade is saved by the Plugin Server the moment it
-   is given, so leaving, closing the window or hiding the Popup loses none.
+   It asks next_card for each Card, grade_card for each Grade and undo_grade
+   to take one back, and saves nothing of its own: every Grade is saved by the
+   Plugin Server the moment it is given, so leaving, closing the window or
+   hiding the Popup loses none. Undo takes back only this Review's Grades,
+   last first.
    What it shows comes from review.js; it draws into #review-main, and into
    #review-done with #done-line for "Nothing Due".
 
    Keys: Space shows the answer, 1 to 4 give Again, Hard, Good or Easy, Esc
-   leaves. Z is Undo's key, and does nothing until Undo exists. After the
-   answer shows, focus is on Good, so Enter never gives Again by accident. */
+   leaves, Z undoes. After the answer shows, focus is on Good, so Enter never
+   gives Again by accident. */
 'use strict';
 
 /**
  * This Review so far. `hooks` is null while no Review is under way; while
  * one is, it says how to leave, how to say a fault, and whether to draw the
- * compact Review of the Popup.
+ * compact Review of the Popup. `reviews` holds the id of each Review it made,
+ * beside its Grade in `marks`, for Undo.
  */
-const studying = { deck: null, next: null, shown: false, marks: [], busy: false, hooks: null };
+const studying = { deck: null, next: null, shown: false, marks: [], reviews: [], busy: false, hooks: null };
 
 /**
  * Start a Review of every Deck (deck null) or of the one named, or carry on
@@ -27,6 +30,7 @@ const studying = { deck: null, next: null, shown: false, marks: [], busy: false,
 async function startReview(deck, hooks) {
   if (studying.hooks === null || studying.deck !== deck) {
     studying.marks = [];
+    studying.reviews = [];
     studying.shown = false;
     studying.next = null;
   }
@@ -41,6 +45,7 @@ function endReview() {
   studying.next = null;
   studying.shown = false;
   studying.marks = [];
+  studying.reviews = [];
 }
 
 /** Leave the Review: end it, and go where the page goes back to. */
@@ -74,7 +79,7 @@ function drawReview() {
   }
   byId('review-main').innerHTML = reviewMarkup(
     next,
-    { shown: studying.shown, marks: studying.marks, undoable: false },
+    { shown: studying.shown, marks: studying.marks, undoable: studying.reviews.length > 0 },
     studying.hooks.compact === true,
   );
 }
@@ -98,10 +103,36 @@ async function gradeShown(grade) {
   if (!studying.shown || studying.busy || studying.next === null || studying.next.card === null) return;
   studying.busy = true;
   try {
-    await call('grade_card', { card: studying.next.card.id, grade: grade });
+    const graded = await call('grade_card', { card: studying.next.card.id, grade: grade });
     studying.marks.push(grade);
+    studying.reviews.push(graded.review);
     studying.shown = false;
     await showNext();
+  } catch (fault) {
+    if (studying.hooks !== null) studying.hooks.say(fault.message || String(fault));
+  } finally {
+    studying.busy = false;
+  }
+}
+
+/**
+ * Take back the last Grade of this Review: its Card comes back as it was,
+ * with its answer shown and focus on Good, and the count left and the strip
+ * move back. With nothing to undo, it does nothing.
+ */
+async function undoLast() {
+  if (studying.busy || studying.reviews.length === 0) return;
+  studying.busy = true;
+  try {
+    const review = studying.reviews[studying.reviews.length - 1];
+    const next = await call('undo_grade', studying.deck === null ? { review: review } : { review: review, deck: studying.deck });
+    if (studying.hooks === null) return;
+    studying.reviews.pop();
+    studying.marks.pop();
+    studying.next = next;
+    studying.shown = true;
+    drawReview();
+    focusOn('[data-grade="3"]');
   } catch (fault) {
     if (studying.hooks !== null) studying.hooks.say(fault.message || String(fault));
   } finally {
@@ -112,10 +143,13 @@ async function gradeShown(grade) {
 // On the document, because app.js, which defines byId, loads after this file.
 document.addEventListener('click', (event) => {
   if (studying.hooks === null) return;
-  const target = event.target.closest('#review-main [data-reveal], #review-main [data-grade], #review-main [data-leave]');
+  const target = event.target.closest(
+    '#review-main [data-reveal], #review-main [data-grade], #review-main [data-undo], #review-main [data-leave]',
+  );
   if (target === null) return;
   if (target.hasAttribute('data-reveal')) revealAnswer();
   else if (target.hasAttribute('data-grade')) gradeShown(Number(target.dataset.grade));
+  else if (target.hasAttribute('data-undo')) undoLast();
   else leaveReview();
 });
 
@@ -130,8 +164,8 @@ document.addEventListener('keydown', (event) => {
     event.preventDefault();
     gradeShown(Number(event.key));
   } else if (event.key === 'z' || event.key === 'Z') {
-    // Undo's key. It does nothing until Undo exists.
     event.preventDefault();
+    undoLast();
   } else if (event.key === 'Escape') {
     event.preventDefault();
     leaveReview();

@@ -11,7 +11,7 @@ import { checkDeckName, contentsOf, deleteDeck, existingDeck, summaries } from '
 import { badInput, told, type Tool } from './mcp.ts';
 import { noteTypeOf } from './note-types.ts';
 import { addNote, checkFields, checkNoteType, checkTags } from './notes.ts';
-import { gradeCard, nextCard } from './review.ts';
+import { gradeCard, nextCard, undoGrade } from './review.ts';
 import { within, type Store } from './store.ts';
 
 /** What the tools work with: the data, and the time it is now. */
@@ -22,7 +22,7 @@ export type Context = {
 
 /** The tools, bound to this Store and this Clock. */
 export function toolsFor(context: Context): readonly Tool[] {
-  return [addNoteTool(context), listDecks(context), countDeck(context), deleteDeckTool(context), ...reviewTools(context)];
+  return [addNoteTool(context), listDecks(context), countDeck(context), deleteDeckTool(context), ...reviewTools(context), undoGradeTool(context)];
 }
 
 function addNoteTool({ store, clock }: Context): Tool {
@@ -150,8 +150,8 @@ function reviewTools({ store, clock }: Context): readonly Tool[] {
       name: 'grade_card',
       description:
         'Grade one Card, as next_card showed it: 1 Again, 2 Hard, 3 Good or 4 Easy. The Grade ' +
-        'is saved at once as a Review, and FSRS schedules the Card. Answers the Card, its Grade ' +
-        'and when it is Due next.',
+        'is saved at once as a Review, and FSRS schedules the Card. Answers the Card, its Grade, ' +
+        'when it is Due next, and the id of the Review, which undo_grade takes back.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -171,4 +171,36 @@ function reviewTools({ store, clock }: Context): readonly Tool[] {
       },
     },
   ];
+}
+
+// Undo: the Plugin Page and the Popup keep the id of each Review they made,
+// and take them back last first.
+function undoGradeTool({ store, clock }: Context): Tool {
+  return {
+    name: 'undo_grade',
+    description:
+      'Take back one Grade: the Card gets back its FSRS state from before it, exactly, and the ' +
+      'Review is deleted. Only a Card\'s last Review can be taken back, so undo the Reviews of a ' +
+      'Review last first. Answers the Grade taken back as `undone` ({ review, card, grade }), ' +
+      'then the undone Card as next_card shows it, with what a Review of every Deck, or of the ' +
+      'one Deck named, has left.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        review: { type: 'integer', description: 'The id of the Review, as grade_card answered it.' },
+        deck: { type: 'string', description: 'The name of the Deck under study. Leave it out when studying every Deck.' },
+      },
+      required: ['review'],
+    },
+    call: (given) => {
+      const review = given['review'];
+      if (!Number.isInteger(review)) {
+        throw badInput('undo_grade needs "review" as the id of a Review, as grade_card answered it.');
+      }
+      const deck = given['deck'] === undefined
+        ? null
+        : existingDeck('undo_grade', store, checkDeckName('undo_grade', given['deck'])).id;
+      return told(undoGrade(store, review as number, { deckId: deck }, clock()));
+    },
+  };
 }
