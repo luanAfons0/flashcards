@@ -39,17 +39,22 @@ function addNoteTool({ store, clock }: Context): Tool {
     name: 'add_note',
     description:
       'Add one Note to a Deck, and make its Cards. The Deck is created when no Deck has this ' +
-      'name in any letter case. A "basic" Note has the Fields Front and Back, written in ' +
-      'Markdown, and makes one Card. Answers the Note\'s id, its Deck as kept, and how many ' +
-      'Cards it made.',
+      'name in any letter case. Fields are written in Markdown. A "basic" Note has the Fields ' +
+      'Front and Back and makes one Card. A "reversed" (Basic and reversed) Note has the same ' +
+      'Fields and makes two: Front to Back and Back to Front. A "cloze" Note has the Fields ' +
+      'Text and Extra (optional); Text holds gaps written as in Anki, {{c1::answer}} or ' +
+      '{{c1::answer::hint}}, and it makes one Card for each gap number. Answers the Note\'s id, ' +
+      'its Deck as kept, and how many Cards it made.',
     inputSchema: {
       type: 'object',
       properties: {
         deck: { type: 'string', description: 'The name of the Deck, such as "Japanese N4 vocabulary".' },
-        noteType: { type: 'string', enum: ['basic'], description: 'The Note Type.' },
+        noteType: { type: 'string', enum: ['basic', 'reversed', 'cloze'], description: 'The Note Type.' },
         fields: {
           type: 'object',
-          description: 'Each Field of the Note Type by name, in Markdown: for "basic", Front and Back.',
+          description:
+            'Each Field of the Note Type by name, in Markdown: Front and Back for "basic" and ' +
+            '"reversed", Text and Extra for "cloze".',
           additionalProperties: { type: 'string' },
         },
         tags: {
@@ -137,7 +142,9 @@ function reviewTools({ store, clock }: Context): readonly Tool[] {
       name: 'next_card',
       description:
         'The next Card of a Review of every Deck, or of the one Deck named: its Deck, which side ' +
-        'it asks, its question and answer in Markdown, and the interval each Grade would give, ' +
+        'or gap it asks ("Basic", "Front to Back", "Back to Front", "Cloze 1"), its question and ' +
+        'answer in Markdown, `extra` when a Cloze Card has Extra to show under the answer, and ' +
+        'the interval each Grade would give, ' +
         'Again first. Answers too how many Cards are left, how many Reviews today has had, and ' +
         'when the next Card is Due. With nothing left, the Card is null. Nothing is saved: a ' +
         'Card shown but not graded stays Due.',
