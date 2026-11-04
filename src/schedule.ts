@@ -10,9 +10,17 @@
  * later. flashcards moves it to 4:00 of that day instead, so it is Due from
  * the start of its due day. FSRS reads the time of the last Review, never the
  * due time, so this changes nothing in its model.
+ *
+ * ts-fsrs counts the days since the last Review between UTC calendar dates,
+ * but a flashcards day runs from 4:00 local time. So every time ts-fsrs sees
+ * is moved onto the flashcards day first (see `onDay`): the local wall clock
+ * less four hours, read as UTC, so that its UTC date is the flashcards day it
+ * falls in. What comes back is moved back: a learning step is the same span
+ * after the real now, a day or more is 4:00 of its due day, and the last
+ * Review is the real now.
  */
 import { DefaultScheduler, type Grade } from 'ts-fsrs';
-import { dayStart } from './day.ts';
+import { DAY_STARTS_AT, dayStart } from './day.ts';
 
 const scheduler = await DefaultScheduler({ version: 'FSRS-6' });
 
@@ -43,13 +51,13 @@ export const STATE_COLUMNS: readonly (keyof CardState)[] = [
 
 /** The state this Card would have after each Grade at this time, Again first. */
 export function previewed(id: number, card: CardState, now: Date): readonly CardState[] {
-  const options = [...scheduler.preview({ card: toFsrs(id, card), now })];
+  const options = [...scheduler.preview({ card: toFsrs(id, card), now: onDay(now) })];
   return options.sort((a, b) => a.grade - b.grade).map((option) => fromFsrs(option.card, now));
 }
 
 /** The state this Card has after this Grade at this time. */
 export function graded(id: number, card: CardState, grade: number, now: Date): CardState {
-  return fromFsrs(scheduler.review({ card: toFsrs(id, card), grade: grade as Grade, now }).card, now);
+  return fromFsrs(scheduler.review({ card: toFsrs(id, card), grade: grade as Grade, now: onDay(now) }).card, now);
 }
 
 /**
@@ -83,8 +91,8 @@ function toFsrs(id: number, card: CardState): FsrsCard {
     difficulty: card.difficulty,
     state: card.state,
     scheduleStatus: card.state === 0 ? 'new' : card.state === 2 ? 'review' : 'learning',
-    dueAt: new Date(card.due),
-    lastReviewAt: card.last_review === null ? null : new Date(card.last_review),
+    dueAt: onDay(new Date(card.due)),
+    lastReviewAt: card.last_review === null ? null : onDay(new Date(card.last_review)),
     reps: card.reps,
     lapses: card.lapses,
     scheduledDays: card.scheduled_days,
@@ -92,10 +100,30 @@ function toFsrs(id: number, card: CardState): FsrsCard {
   } as FsrsCard;
 }
 
+/**
+ * This time as ts-fsrs is to see it: the local wall clock less the hours
+ * before a day starts, as a UTC time. Its UTC date is then the flashcards day
+ * the time falls in, so ts-fsrs counts whole flashcards days.
+ */
+function onDay(time: Date): Date {
+  const shifted = new Date(time);
+  shifted.setHours(shifted.getHours() - DAY_STARTS_AT);
+  return new Date(
+    Date.UTC(
+      shifted.getFullYear(), shifted.getMonth(), shifted.getDate(),
+      shifted.getHours(), shifted.getMinutes(), shifted.getSeconds(), shifted.getMilliseconds(),
+    ),
+  );
+}
+
 function fromFsrs(card: FsrsCard, now: Date): CardState {
   // A day or more ahead is Due from 4:00 of the due day, counted from the day
-  // this Grade was given in.
-  const due = card.scheduledDays >= 1 ? dayStart(now, card.scheduledDays) : card.dueAt;
+  // this Grade was given in. A learning step is the same span after the real
+  // now as ts-fsrs put it after the moved one.
+  const due =
+    card.scheduledDays >= 1
+      ? dayStart(now, card.scheduledDays)
+      : new Date(now.getTime() + (card.dueAt.getTime() - onDay(now).getTime()));
   return {
     due: due.toISOString(),
     stability: card.stability,
@@ -105,6 +133,7 @@ function fromFsrs(card: FsrsCard, now: Date): CardState {
     lapses: card.lapses,
     scheduled_days: card.scheduledDays,
     learning_step: card.learningStep ?? 0,
-    last_review: card.lastReviewAt === null ? null : card.lastReviewAt.toISOString(),
+    // ts-fsrs saw the moved now, so the real one is kept.
+    last_review: card.lastReviewAt === null ? null : now.toISOString(),
   };
 }

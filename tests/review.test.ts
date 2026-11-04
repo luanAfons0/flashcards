@@ -293,3 +293,37 @@ test('a Grade must be 1 to 4 for a Card there is', async (t) => {
   assert.match(refusalOf(await plugin.call('grade_card', { card: 999, grade: GOOD })), /There is no Card 999\./);
   assert.equal((await listDecks(plugin)).decks[0]?.new, 1);
 });
+
+test('FSRS counts days from 4:00 local: two Cards graduated the same evening get the same interval', async (t) => {
+  // In São Paulo (UTC-3), A graduates at 20:00 local on 4 November and B at
+  // 21:30 local, which is already 5 November in UTC. Both graduated in the
+  // day of 4 November, both are Due from 4:00 local on 6 November, and both
+  // are graded Good at 8:00 local on 6 November: two days for each, so the
+  // same interval for each.
+  const tz = 'America/Sao_Paulo';
+  const first = await startedAndShaken(t, { env: { FLASHCARDS_NOW: '2026-11-04T22:50:00.000Z', TZ: tz } });
+  await addBasic(first, 'Rust', 'a', 'A');
+  await addBasic(first, 'Rust', 'b', 'B');
+  const shownA = await gradeNext(first, GOOD);
+  const evening = await at(t, first, '2026-11-04T23:00:00.000Z', tz);
+  const graduatedA = await grade(evening, shownA.id, GOOD);
+  const later = await at(t, evening, '2026-11-05T00:20:00.000Z', tz);
+  const { card: shownB } = await nextCard(later);
+  assert.equal(shownB?.question, 'b');
+  await grade(later, shownB!.id, GOOD);
+  const night = await at(t, later, '2026-11-05T00:30:00.000Z', tz);
+  const graduatedB = await grade(night, shownB!.id, GOOD);
+
+  const morning = await at(t, night, '2026-11-06T11:00:00.000Z', tz);
+  const nextA = await nextCard(morning);
+  const gradedA = await grade(morning, nextA.card!.id, GOOD);
+  const nextB = await nextCard(morning);
+  const gradedB = await grade(morning, nextB.card!.id, GOOD);
+
+  assert.equal(graduatedA.due, '2026-11-06T07:00:00.000Z');
+  assert.equal(graduatedB.due, '2026-11-06T07:00:00.000Z');
+  assert.equal(shownA.question, 'a');
+  assert.deepEqual([nextA.card?.question, nextB.card?.question], ['a', 'b']);
+  assert.deepEqual(nextB.card?.intervals, nextA.card?.intervals);
+  assert.equal(gradedB.due, gradedA.due);
+});
