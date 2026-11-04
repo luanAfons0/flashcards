@@ -10,7 +10,7 @@ import { PROTOCOL_VERSION, startedAndShaken, startPluginServer } from './helpers
 
 /** Every tool flashcards ships. The names are the contract with the Page and its callers. */
 const TOOLS = [
-  'add_note', 'count_deck', 'delete_deck', 'grade_card', 'list_decks', 'next_card',
+  'add_note', 'count_deck', 'delete_deck', 'grade_card', 'list_decks', 'next_card', 'remind_due', 'undo_grade',
   'get_settings', 'update_settings',
 ];
 

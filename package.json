@@ -10,10 +10,12 @@
   "scripts": {
     "test": "node --test",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm test"
+    "check": "npm run typecheck && npm test",
+    "release": "node scripts/release.ts"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
+    "tsdown": "^0.23.5",
     "typescript": "^7.0.2"
   },
   "dependencies": {

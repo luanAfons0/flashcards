@@ -26,8 +26,11 @@ export type Next = {
   readonly now: string;
 };
 
-/** What `grade_card` answers. */
-export type Graded = { readonly card: number; readonly grade: number; readonly due: string };
+/** What `grade_card` answers: `review` is the id `undo_grade` takes back. */
+export type Graded = { readonly card: number; readonly grade: number; readonly due: string; readonly review: number };
+
+/** What `undo_grade` answers: the Grade it took back, then the undone Card, as `next_card` shows it. */
+export type Undone = Next & { readonly undone: { readonly review: number; readonly card: number; readonly grade: number } };
 
 /** The Grades by name, as `grade_card` takes them. */
 export const AGAIN = 1;
@@ -43,6 +46,11 @@ export async function nextCard(plugin: Started, deck?: string): Promise<Next> {
 /** Grade one Card, and hand back what `grade_card` answered. */
 export async function grade(plugin: Started, card: number, given: number): Promise<Graded> {
   return structureOf<Graded>(await plugin.call('grade_card', { card, grade: given }));
+}
+
+/** Take back the Review with this id, as `grade_card` answered it, in a Review of every Deck or of the one named. */
+export async function undo(plugin: Started, review: number, deck?: string): Promise<Undone> {
+  return structureOf<Undone>(await plugin.call('undo_grade', deck === undefined ? { review } : { review, deck }));
 }
 
 /** Grade whatever Card comes next, and hand back that Card. */

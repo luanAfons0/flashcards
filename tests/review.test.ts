@@ -64,7 +64,7 @@ test('each Grade is saved at once: Easy schedules the Card from 4:00 of its due 
   const later = await at(t, plugin, '2026-11-05T10:00:00.000Z');
   const deck = (await listDecks(later)).decks[0];
 
-  assert.deepEqual(graded, { card: card!.id, grade: EASY, due: '2026-11-12T04:00:00.000Z' });
+  assert.deepEqual(graded, { card: card!.id, grade: EASY, due: '2026-11-12T04:00:00.000Z', review: 1 });
   assert.equal(deck?.new, 0);
   assert.equal(deck?.due, 0);
   assert.equal(deck?.nextDue, '2026-11-12T04:00:00.000Z');

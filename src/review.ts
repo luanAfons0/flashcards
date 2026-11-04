@@ -65,8 +65,8 @@ export type Next = {
   readonly now: string;
 };
 
-/** What `grade_card` answers: the Card, its Grade, and when it is Due next. */
-export type GradedCard = { readonly card: number; readonly grade: number; readonly due: string };
+/** What `grade_card` answers: the Card, its Grade, when it is Due next, and the Review's id, for Undo. */
+export type GradedCard = { readonly card: number; readonly grade: number; readonly due: string; readonly review: number };
 
 const LEARNING = `cards.state IN (1, 3)`;
 
@@ -105,7 +105,7 @@ export function gradeCard(store: Store, cardId: number, grade: number, now: Date
       throw badInput(`There is no Card ${cardId}. Ask next_card for the Card to grade.`);
     }
     const after = graded(cardId, before, grade, now);
-    store
+    const review = store
       .prepare(
         `INSERT INTO reviews (card_id, grade, reviewed_at, ${STATE_COLUMNS.join(', ')})
          VALUES (?, ?, ?, ${STATE_COLUMNS.map(() => '?').join(', ')})`,
@@ -114,7 +114,7 @@ export function gradeCard(store: Store, cardId: number, grade: number, now: Date
     store
       .prepare(`UPDATE cards SET ${STATE_COLUMNS.map((column) => `${column} = ?`).join(', ')} WHERE id = ?`)
       .run(...STATE_COLUMNS.map((column) => after[column]), cardId);
-    return { card: cardId, grade, due: after.due };
+    return { card: cardId, grade, due: after.due, review: Number(review.lastInsertRowid) };
   });
 }
 
@@ -123,7 +123,7 @@ function group(
   scope: Scope,
   where: string,
   order: string,
-  bound: Readonly<Record<string, string>>,
+  bound: Readonly<Record<string, string | number>>,
 ): QueuedCard[] {
   return store
     .prepare(
@@ -162,4 +162,54 @@ function nextDue(store: Store, scope: Scope, now: Date): string | null {
     )
     .get({ now: now.toISOString(), deck: scope.deckId }) as { due: string | null };
   return row.due;
+}
+
+// Undo: a Review keeps the Card's whole state from before its Grade, so
+// taking the Grade back is copying that state back and deleting the Review.
+// Only a Card's last Review can go, so Undo walks back one Grade at a time
+// and never puts a Card behind a Grade it has had since.
+
+/** What `undo_grade` answers: the Grade taken back, then the undone Card as `next_card` shows it. */
+export type Undone = Next & {
+  readonly undone: { readonly review: number; readonly card: number; readonly grade: number };
+};
+
+/**
+ * Take back the Review with this id: give its Card the state it had before
+ * that Grade, delete the Review, and show that Card again first, with what
+ * a Review of this scope has left.
+ */
+export function undoGrade(store: Store, reviewId: number, scope: Scope, now: Date): Undone {
+  const undone = within(store, () => {
+    const review = store
+      .prepare(
+        `SELECT card_id AS card, grade, ${STATE_COLUMNS.join(', ')},
+                (SELECT MAX(later.id) FROM reviews AS later WHERE later.card_id = reviews.card_id) AS last
+           FROM reviews WHERE id = ?`,
+      )
+      .get(reviewId) as (CardState & { card: number; grade: number; last: number }) | undefined;
+    if (review === undefined) {
+      throw badInput(`There is no Review ${reviewId} to undo: it is undone already, or its Deck is deleted.`);
+    }
+    if (review.last !== reviewId) {
+      throw badInput(
+        `Review ${reviewId} is not the last Review of Card ${review.card}. Undo Review ${review.last} first.`,
+      );
+    }
+    store
+      .prepare(`UPDATE cards SET ${STATE_COLUMNS.map((column) => `${column} = ?`).join(', ')} WHERE id = ?`)
+      .run(...STATE_COLUMNS.map((column) => review[column]), review.card);
+    store.prepare('DELETE FROM reviews WHERE id = ?').run(reviewId);
+    return { review: reviewId, card: review.card, grade: review.grade };
+  });
+  const queue = reviewQueue(store, scope, now);
+  const card = group(store, { deckId: null }, 'cards.id = :card', 'cards.id', { card: undone.card })[0]!;
+  return {
+    undone,
+    card: shown(card, now),
+    left: queue.some((queued) => queued.id === card.id) ? queue.length : queue.length + 1,
+    reviewsToday: reviewsToday(store, now),
+    nextDue: nextDue(store, scope, now),
+    now: now.toISOString(),
+  };
 }
