@@ -7,11 +7,11 @@
  */
 import type { Clock } from './clock.ts';
 import { dailyLimit, today } from './daily-limit.ts';
-import { checkDeckName, summaries } from './decks.ts';
+import { checkDeckName, contentsOf, deleteDeck, existingDeck, summaries } from './decks.ts';
 import { told, type Tool } from './mcp.ts';
 import { noteTypeOf } from './note-types.ts';
 import { addNote, checkFields, checkNoteType, checkTags } from './notes.ts';
-import type { Store } from './store.ts';
+import { within, type Store } from './store.ts';
 
 /** What the tools work with: the data, and the time it is now. */
 export type Context = {
@@ -21,7 +21,7 @@ export type Context = {
 
 /** The tools, bound to this Store and this Clock. */
 export function toolsFor(context: Context): readonly Tool[] {
-  return [addNoteTool(context), listDecks(context)];
+  return [addNoteTool(context), listDecks(context), countDeck(context), deleteDeckTool(context)];
 }
 
 function addNoteTool({ store, clock }: Context): Tool {
@@ -77,6 +77,44 @@ function listDecks({ store, clock }: Context): Tool {
         limit: dailyLimit(),
         now: now.toISOString(),
       });
+    },
+  };
+}
+
+/** The one argument of the Deck tools: the name of a Deck that is there. */
+const DECK_ONLY = {
+  type: 'object',
+  properties: {
+    deck: { type: 'string', description: 'The name of the Deck, in any letter case, such as "Japanese N4 vocabulary".' },
+  },
+  required: ['deck'],
+} as const;
+
+function countDeck({ store }: Context): Tool {
+  return {
+    name: 'count_deck',
+    description:
+      'What one Deck holds, before you delete it: its name as kept, and how many Notes, Cards ' +
+      'and Reviews delete_deck would delete with it. Changes nothing.',
+    inputSchema: DECK_ONLY,
+    call: (given) => {
+      const deck = existingDeck('count_deck', store, checkDeckName('count_deck', given['deck']));
+      return told(contentsOf(store, deck));
+    },
+  };
+}
+
+function deleteDeckTool({ store }: Context): Tool {
+  return {
+    name: 'delete_deck',
+    description:
+      'Delete one Deck with its Notes, their Cards and the Cards\' Reviews. It cannot be undone, ' +
+      'and no other Deck changes. Answers the Deck\'s name and how many Notes, Cards and Reviews ' +
+      'it deleted, as count_deck counts them.',
+    inputSchema: DECK_ONLY,
+    call: (given) => {
+      const deck = checkDeckName('delete_deck', given['deck']);
+      return told(within(store, () => deleteDeck('delete_deck', store, deck)));
     },
   };
 }

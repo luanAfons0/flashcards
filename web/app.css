@@ -323,6 +323,8 @@ textarea.code { font: 14px/1.6 var(--mono); }
   .btn:hover { background: var(--press); }
   .btn.primary:hover { background: var(--ink-2); border-color: var(--ink-2); }
   .btn.ghost:hover { background: var(--press); color: var(--ink); }
+  /* The one destructive button keeps its danger fill under a pointer too. */
+  .btn.danger:hover { background: var(--danger); }
   .grade:hover { background: var(--press); }
   .notes tbody tr:hover td { background: var(--sunk); }
   .tabs a:hover { color: var(--ink); }

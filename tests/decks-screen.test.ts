@@ -25,6 +25,7 @@ const deckRow = page['deckRow'] as (deck: Deck, now: string) => string;
 const nextDueText = page['nextDueText'] as (due: string, now: string) => string;
 const todayLine = page['todayLine'] as (today: object, limit: object) => string;
 const totalDue = page['totalDue'] as (decks: Deck[]) => number;
+const confirmRow = page['confirmRow'] as (contents: object) => string;
 
 const NOW = '2026-11-04T10:00:00.000Z';
 
@@ -100,6 +101,42 @@ test('each row reaches the Notes of its Deck and offers Delete Deck, named for t
   assert.match(row, /aria-label="Delete Rust ownership" title="Delete Deck"/);
 });
 
+test('the Delete Deck button of a row names its Deck for the confirm, escaped', () => {
+  assert.match(deckRow(rust, NOW), /data-delete="Rust ownership"/);
+  assert.match(deckRow({ ...rust, name: 'A "B" <c>' }, NOW), /data-delete="A &quot;B&quot; &lt;c&gt;"/);
+});
+
+test('the confirm fills the whole row, names the Deck and counts its Notes, Cards and Reviews', () => {
+  const row = confirmRow({ deck: 'Japanese N4 vocabulary', notes: 486, cards: 960, reviews: 3120 });
+
+  assert.match(row, /^<tr class="confirm"><td colspan="4">/);
+  assert.match(row, /<div class="confirm-box" role="group" aria-labelledby="del-h">/);
+  assert.match(row, /<h2 id="del-h">Delete Japanese N4 vocabulary\?<\/h2>/);
+  assert.match(row, /<p class="num">This deletes 486 Notes, 960 Cards and 3120 Reviews\. You cannot undo it\.<\/p>/);
+});
+
+test('the confirm counts in the singular for one', () => {
+  const row = confirmRow({ deck: 'Go', notes: 1, cards: 1, reviews: 1 });
+
+  assert.match(row, /This deletes 1 Note, 1 Card and 1 Review\. You cannot undo it\./);
+});
+
+test('the confirm offers "Keep the Deck" first and "Delete Deck" in the danger colour', () => {
+  const row = confirmRow({ deck: 'Rust ownership', notes: 41, cards: 58, reviews: 0 });
+
+  assert.match(
+    row,
+    /<button type="button" class="btn" id="keep" data-keep>Keep the Deck<\/button>\s*<button type="button" class="btn danger" data-confirm-delete="Rust ownership"><svg class="i" aria-hidden="true"><use href="#i-trash"\/><\/svg>Delete Deck<\/button>/,
+  );
+});
+
+test('the confirm keeps a Deck name as text, never markup', () => {
+  const row = confirmRow({ deck: '<img src=x onerror=alert(1)>', notes: 1, cards: 1, reviews: 0 });
+
+  assert.ok(!row.includes('<img'), row);
+  assert.match(row, /Delete &lt;img src=x onerror=alert\(1\)&gt;\?/);
+});
+
 test('"Study all Due" totals the Due of every Deck', () => {
   assert.equal(totalDue([japanese, rust, { ...japanese, due: 13 }]), 47);
   assert.equal(totalDue([]), 0);
@@ -114,4 +151,16 @@ test('the today line says what today has shown and the Daily Limit, in the mockâ
     todayLine({ reviews: 1, newCards: 1 }, { newCards: 20, reviews: 200 }),
     'Today: 1 Review and 1 New Card. Daily Limit: 20 New, 200 Reviews.',
   );
+});
+
+test('at phone width the Delete Deck button and the confirm stay: only the Notes button is hidden', async () => {
+  const css = await readFile(join(REPOSITORY, 'web', 'app.css'), 'utf8');
+  const phone = css.slice(css.indexOf('@media (max-width: 600px)'));
+  const block = phone.slice(0, phone.indexOf('\n}\n'));
+  const hidden = [...block.matchAll(/([^{}\n]+)\{[^}]*display:\s*none/g)].map((found) => (found[1] ?? '').trim());
+
+  assert.ok(hidden.includes('td.acts .tool-notes'), 'the Notes button is the one row tool hidden at phone width');
+  for (const selector of hidden) {
+    assert.ok(!/\.tool(?!-)|confirm|row-tools|td\.acts\s*$|\.danger/.test(selector), `${selector} hides the delete path`);
+  }
 });
