@@ -124,6 +124,8 @@ the Note editor. A change to a Field keeps every Card's schedule. Taking out a
 Cloze gap number deletes its Card and that Card's Reviews, and a new gap
 number makes a New Card. Basic to Basic and reversed makes the reverse Card,
 and the change back deletes it. A Note never changes to or from Cloze.
+Delete Note, in the editor, deletes the Note with its Cards and their Reviews,
+after a confirm that counts them; Keep the Note, or Esc, keeps it.
 
 Other Plugins and the Mate can do the same with the tools:
 
@@ -135,8 +137,7 @@ Other Plugins and the Mate can do the same with the tools:
   `{ id, deck, cards, added, deleted }`, the ordinals of the Cards it made and
   deleted.
 - `delete_note({ id })` deletes one Note with its Cards and their Reviews, and
-  answers `{ id, deck, cards, reviews }`. The Plugin Page has no Delete Note
-  yet.
+  answers `{ id, deck, cards, reviews }`.
 
 ## What it needs
 
