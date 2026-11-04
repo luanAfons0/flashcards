@@ -76,6 +76,22 @@ function deckRow(deck, now) {
     due +
     '<td class="acts"><div class="row-tools">' + study +
     '<a class="btn ghost icon tool tool-notes" href="#notes" aria-label="Notes of ' + name + '" title="Notes"><svg class="i" aria-hidden="true"><use href="#i-notes"/></svg></a>' +
-    '<button type="button" class="btn ghost icon tool" aria-label="Delete ' + name + '" title="Delete Deck"><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg></button>' +
+    '<button type="button" class="btn ghost icon tool" data-delete="' + name + '" aria-label="Delete ' + name + '" title="Delete Deck"><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg></button>' +
     '</div></td></tr>';
+}
+
+/**
+ * The confirm that takes a Deck row's place before the Deck is deleted, from
+ * what count_deck answers. It names the Deck and counts what goes with it.
+ * "Keep the Deck" comes first, and app.js focuses it, so Enter keeps.
+ */
+function confirmRow(contents) {
+  const name = escapeHtml(contents.deck);
+  return '<tr class="confirm"><td colspan="4"><div class="confirm-box" role="group" aria-labelledby="del-h">' +
+    '<div><h2 id="del-h">Delete ' + name + '?</h2>' +
+    '<p class="num">This deletes ' + counted(contents.notes, 'Note', 'Notes') + ', ' + counted(contents.cards, 'Card', 'Cards') +
+    ' and ' + counted(contents.reviews, 'Review', 'Reviews') + '. You cannot undo it.</p></div>' +
+    '<div class="row-tools"><button type="button" class="btn" id="keep" data-keep>Keep the Deck</button>' +
+    '<button type="button" class="btn danger" data-confirm-delete="' + name + '"><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg>Delete Deck</button>' +
+    '</div></div></td></tr>';
 }
