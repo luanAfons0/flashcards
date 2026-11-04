@@ -29,6 +29,41 @@ const STEPS: readonly string[] = [
     created_at TEXT NOT NULL
   );
   `,
+  // A Note is its Deck, its Note Type, its Fields (a JSON object of Field
+  // name to Markdown) and its Tags (a JSON array of words). A Card is one
+  // ordinal of one Note, with the FSRS state of its own schedule. A New Card
+  // has the state of an empty FSRS card: state 0, no Review, Due from the
+  // time it was made. Times are ISO 8601 in UTC, so they compare as text.
+  // Deleting a Deck deletes its Notes, and deleting a Note deletes its Cards.
+  `
+  CREATE TABLE notes (
+    id INTEGER PRIMARY KEY,
+    deck_id INTEGER NOT NULL REFERENCES decks (id) ON DELETE CASCADE,
+    note_type TEXT NOT NULL,
+    fields TEXT NOT NULL,
+    tags TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL,
+    modified_at TEXT NOT NULL
+  );
+  CREATE INDEX notes_by_deck ON notes (deck_id);
+
+  CREATE TABLE cards (
+    id INTEGER PRIMARY KEY,
+    note_id INTEGER NOT NULL REFERENCES notes (id) ON DELETE CASCADE,
+    ordinal INTEGER NOT NULL,
+    due TEXT NOT NULL,
+    stability REAL NOT NULL DEFAULT 0,
+    difficulty REAL NOT NULL DEFAULT 0,
+    state INTEGER NOT NULL DEFAULT 0,
+    reps INTEGER NOT NULL DEFAULT 0,
+    lapses INTEGER NOT NULL DEFAULT 0,
+    scheduled_days INTEGER NOT NULL DEFAULT 0,
+    learning_step INTEGER NOT NULL DEFAULT 0,
+    last_review TEXT,
+    UNIQUE (note_id, ordinal)
+  );
+  CREATE INDEX cards_by_due ON cards (due);
+  `,
 ];
 
 /** Open `flashcards.db`, and bring it up to the current version. */
