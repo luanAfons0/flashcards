@@ -6,7 +6,7 @@
    quotes, fenced code, emphasis, code and links, and nothing more. Every
    character of the source is escaped before any Markdown is read, so text
    can never become markup; a link keeps only an http, https or mailto
-   address, or a relative one.
+   address, or a relative one, and never one with a control character.
 
    Pure: it defines one global, renderMarkdown(text) → an HTML string, and
    reaches for nothing else, so a test runs these bytes in node:vm. */
@@ -22,9 +22,14 @@
       .replace(/'/g, '&#39;');
   }
 
-  /** An address a link may keep, already escaped, or null for one it may not. */
+  /**
+   * An address a link may keep, already escaped, or null for one it may not.
+   * One with a control character is never kept: a browser drops those from
+   * the start of an href, so "\u0002javascript:" would run as javascript:.
+   */
   function safeAddress(escaped) {
     const plain = escaped.replace(/&amp;/g, '&').trim();
+    if (/[\u0000-\u001f\u007f]/.test(plain)) return null;
     if (/^(https?:|mailto:)/i.test(plain)) return escaped.trim();
     if (/^[a-z][a-z0-9+.-]*:/i.test(plain) || plain.startsWith('//')) return null;
     return escaped.trim();

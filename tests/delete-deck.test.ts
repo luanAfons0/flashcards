@@ -54,6 +54,18 @@ test('count_deck finds a Deck by its name in any letter case, and answers it as 
   assert.equal(counted.deck, 'Rust ownership');
 });
 
+test('count_deck and delete_deck find a Deck named with letters beyond ASCII in any letter case', async (t) => {
+  const plugin = await startedAndShaken(t);
+  await addBasic(plugin, 'Verbos AÇÃO', 'fazer, eu, pretérito', 'fiz');
+
+  const counted = structureOf<Counted>(await plugin.call('count_deck', { deck: 'verbos ação' }));
+  const deleted = structureOf<Counted>(await plugin.call('delete_deck', { deck: 'VERBOS AÇÃO' }));
+
+  assert.equal(counted.deck, 'Verbos AÇÃO');
+  assert.equal(deleted.notes, 1);
+  assert.deepEqual((await listDecks(plugin)).decks, []);
+});
+
 test('count_deck changes nothing', async (t) => {
   const plugin = await startedAndShaken(t);
   await addBasic(plugin, 'Rust ownership', 'Who frees a Box?', 'Its owner.');

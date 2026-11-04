@@ -16,7 +16,7 @@
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { cp, mkdtemp, readdir, rm } from 'node:fs/promises';
+import { cp, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import test, { after, before } from 'node:test';
@@ -58,8 +58,31 @@ async function filesUnder(folder: string): Promise<string[]> {
     .sort();
 }
 
-test('the Plugin Release holds mcp.js, web/ and mcp, and nothing else', async () => {
-  assert.deepEqual((await readdir(release)).sort(), ['mcp', 'mcp.js', 'web']);
+test('the Plugin Release holds mcp.js, package.json, web/ and mcp, and nothing else', async () => {
+  assert.deepEqual((await readdir(release)).sort(), ['mcp', 'mcp.js', 'package.json', 'web']);
+});
+
+test('the package.json of the Plugin Release says mcp.js is an ES module, and nothing more', async () => {
+  assert.deepEqual(JSON.parse(await readFile(join(release, 'package.json'), 'utf8')), { type: 'module' });
+});
+
+test('the released mcp.js starts quietly under a package.json of CommonJS', async (t) => {
+  // An install can sit below a folder whose package.json says CommonJS, or
+  // says no type at all; mcp.js awaits at the top level, so it must not be
+  // read by that one.
+  for (const above of [{ type: 'commonjs' }, { name: 'somewhere' }]) {
+    const parent = await makeDirectory(t);
+    await writeFile(join(parent, 'package.json'), JSON.stringify(above));
+    const directory = join(parent, 'flashcards');
+    await cp(release, directory, { recursive: true });
+    const released = await startPluginServer(t, { directory, entry: join(directory, 'mcp.js') });
+
+    const shaken = await released.handshake();
+    structureOf(await released.call('list_decks'));
+
+    assert.equal(shaken.error, undefined, released.output());
+    assert.equal(released.output(), '', `under ${JSON.stringify(above)} it said: ${released.output()}`);
+  }
 });
 
 test('web/ ships as it is in the repository', async () => {

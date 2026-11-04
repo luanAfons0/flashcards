@@ -9,6 +9,7 @@
  * refused rather than guessed at.
  */
 import { DatabaseSync } from 'node:sqlite';
+import { deckKey } from './deck-key.ts';
 
 /** Where the data lives, relative to the Plugin directory. */
 export const FILE = 'flashcards.db';
@@ -17,10 +18,11 @@ export const FILE = 'flashcards.db';
 export type Store = DatabaseSync;
 
 /**
- * Each step moves the file up one version. A step is never edited once it
- * has shipped; a change to the schema is a new step at the end.
+ * Each step moves the file up one version: SQL, or work that needs more than
+ * SQL. A step is never edited once it has shipped; a change to the schema is
+ * a new step at the end.
  */
-const STEPS: readonly string[] = [
+const STEPS: readonly (string | ((store: Store) => void))[] = [
   // A Deck is a name, unique without regard to letter case.
   `
   CREATE TABLE decks (
@@ -87,6 +89,30 @@ const STEPS: readonly string[] = [
   CREATE INDEX reviews_by_time ON reviews (reviewed_at);
   CREATE INDEX reviews_by_card ON reviews (card_id);
   `,
+  // A Deck is found by its key (see deck-key.ts), which folds letter case
+  // beyond ASCII, as NOCASE does not. Two Decks an older file kept apart only
+  // by such letters become one: the one made first keeps its name and takes
+  // the Notes of the others.
+  (store) => {
+    store.exec('ALTER TABLE decks ADD COLUMN key TEXT');
+    const decks = store.prepare('SELECT id, name FROM decks ORDER BY created_at, id').all() as {
+      id: number;
+      name: string;
+    }[];
+    const kept = new Map<string, number>();
+    for (const deck of decks) {
+      const key = deckKey(deck.name);
+      const first = kept.get(key);
+      if (first === undefined) {
+        kept.set(key, deck.id);
+        store.prepare('UPDATE decks SET key = ? WHERE id = ?').run(key, deck.id);
+        continue;
+      }
+      store.prepare('UPDATE notes SET deck_id = ? WHERE deck_id = ?').run(first, deck.id);
+      store.prepare('DELETE FROM decks WHERE id = ?').run(deck.id);
+    }
+    store.exec('CREATE UNIQUE INDEX decks_by_key ON decks (key)');
+  },
 ];
 
 /** Open `flashcards.db`, and bring it up to the current version. */
@@ -104,7 +130,9 @@ export function openStore(path: string = FILE): Store {
   }
   for (let step = version; step < STEPS.length; step += 1) {
     within(store, () => {
-      store.exec(STEPS[step] ?? '');
+      const work = STEPS[step] ?? '';
+      if (typeof work === 'string') store.exec(work);
+      else work(store);
       store.exec(`PRAGMA user_version = ${step + 1}`);
     });
   }

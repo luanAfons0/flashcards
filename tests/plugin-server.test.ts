@@ -5,8 +5,13 @@
  * temporary Plugin directory, spoken to as the Host speaks to it.
  */
 import { strict as assert } from 'node:assert';
+import { readFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { PROTOCOL_VERSION, startedAndShaken, startPluginServer } from './helpers/plugin.ts';
+
+const REPOSITORY = dirname(dirname(fileURLToPath(import.meta.url)));
 
 /** Every tool flashcards ships. The names are the contract with the Page and its callers. */
 const TOOLS = [
@@ -29,6 +34,15 @@ test('the Plugin Server answers the handshake', async (t) => {
   assert.equal(result.protocolVersion, PROTOCOL_VERSION);
   assert.deepEqual(result.capabilities.tools, {});
   assert.equal(result.serverInfo.name, 'flashcards');
+});
+
+test('the Plugin Server gives the Host the version package.json names', async (t) => {
+  const plugin = await startPluginServer(t);
+  const { version } = JSON.parse(await readFile(join(REPOSITORY, 'package.json'), 'utf8')) as { version: string };
+
+  const answer = await plugin.handshake();
+
+  assert.equal((answer.result as { serverInfo: { version: string } }).serverInfo.version, version);
 });
 
 test('it names every tool it ships, each with a schema for its arguments', async (t) => {
@@ -75,6 +89,22 @@ test('a line on stdin that is not JSON is one sentence on stderr, and the pipe s
   assert.ok(plugin.output().startsWith('flashcards: '), `stderr said: ${plugin.output()}`);
   assert.equal(plugin.lines().length, said + 1, 'the bad line was answered on stdout');
   assert.equal(answer.error, undefined);
+});
+
+test('a line on stdin that is JSON but not an object is one sentence on stderr, and the pipe survives it', async (t) => {
+  const plugin = await startedAndShaken(t);
+  const said = plugin.lines().length;
+
+  for (const line of ['null', '3', '"x"', '[]', 'true']) plugin.raw(line);
+  const answer = await plugin.ask('tools/list');
+  for (let waited = 0; plugin.output().split('not a JSON-RPC message').length < 6 && waited < 2000; waited += 20) {
+    await new Promise((done) => setTimeout(done, 20));
+  }
+
+  assert.equal(answer.error, undefined, plugin.output());
+  assert.equal(plugin.output().split('\n').filter((line) => line.startsWith('flashcards: ')).length, 5, plugin.output());
+  assert.ok(plugin.output().includes('not a JSON-RPC message'), `stderr said: ${plugin.output()}`);
+  assert.equal(plugin.lines().length, said + 1, 'a bad line was answered on stdout');
 });
 
 test('a notification is never answered', async (t) => {

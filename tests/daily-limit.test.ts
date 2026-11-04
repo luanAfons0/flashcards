@@ -135,3 +135,40 @@ test('a Deck whose only Card waits in a short learning step is not Due, yet a Re
   assert.equal(listed.decks[0]?.nextDue, '2026-11-04T10:10:00.000Z');
   assert.equal((await nextCard(plugin, 'Rust')).card?.question, 'b1');
 });
+
+test('a Card Due now that the Daily Limit holds back is Due again at 4:00 the next day', async (t) => {
+  // Easy on a New Card is Due from 4:00 eight days on. With no Reviews left
+  // for the day, that Card waits, so the next Card is Due when the next day
+  // starts, and not "never".
+  const first = await startedAndShaken(t);
+  await addBasic(first, 'Rust', 'b1', 'B1');
+  await gradeNext(first, EASY);
+  const plugin = await at(t, first, '2026-11-12T10:00:00.000Z');
+  await limited(plugin, 20, 0);
+
+  const next = await nextCard(plugin);
+  const listed = await listDecks(plugin);
+
+  assert.equal(next.card, null);
+  assert.equal(next.nextDue, '2026-11-13T04:00:00.000Z');
+  assert.equal(listed.decks[0]?.nextDue, '2026-11-13T04:00:00.000Z');
+});
+
+test('a Card Due before the next day still names its own due time when the limit holds another back', async (t) => {
+  // b1 is a Review Card, Due and held back by a limit of 0 Reviews; b2,
+  // New and graded Good, waits ten minutes in a learning step, which comes
+  // before 4:00 the next day.
+  const first = await startedAndShaken(t);
+  await addBasic(first, 'Rust', 'b1', 'B1');
+  await gradeNext(first, EASY);
+  const plugin = await at(t, first, '2026-11-12T10:00:00.000Z');
+  await addBasic(plugin, 'Rust', 'b2', 'B2');
+  await limited(plugin, 20, 0);
+
+  const shown = await gradeNext(plugin, GOOD);
+  const next = await nextCard(plugin);
+
+  assert.equal(shown.question, 'b2');
+  assert.equal(next.card?.question, 'b2');
+  assert.equal(next.nextDue, '2026-11-12T10:10:00.000Z');
+});

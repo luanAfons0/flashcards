@@ -11,12 +11,17 @@
  * this Plugin Server asked, such as a Notice, and is handed to `answered`.
  */
 import { createInterface } from 'node:readline';
+import plugin from '../package.json' with { type: 'json' };
 
 /** The MCP version the Host speaks. */
 export const PROTOCOL_VERSION = '2025-06-18';
 
-/** What this Plugin calls itself when the Host asks. */
-export const SERVER_INFO = { name: 'flashcards', version: '1.0.0' };
+/**
+ * What this Plugin calls itself when the Host asks. The version is the one
+ * `package.json` names, so a Plugin Release never says another; the release
+ * build bundles it into `mcp.js`.
+ */
+export const SERVER_INFO = { name: 'flashcards', version: plugin.version };
 
 /** JSON-RPC's own code for a method this Plugin Server does not have. */
 export const METHOD_NOT_FOUND = -32601;
@@ -85,6 +90,11 @@ export function serve(
       message = JSON.parse(line) as Message;
     } catch {
       process.stderr.write('flashcards: a line on stdin was not JSON.\n');
+      return;
+    }
+    // JSON that is not an object, such as `null` or `3`, is no message either.
+    if (typeof message !== 'object' || message === null || Array.isArray(message)) {
+      process.stderr.write('flashcards: a line on stdin was JSON, but not a JSON-RPC message.\n');
       return;
     }
     // A message that names no method answers something this Plugin Server
