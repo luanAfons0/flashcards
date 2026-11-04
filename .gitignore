@@ -1,7 +1,25 @@
 node_modules/
+
+# An agent's worktrees.
+.claude/
+
+# The Plugin's own data. When this repository is also the Plugin directory the
+# Host runs, this is this machine's Decks, not the project's.
+flashcards.db
+flashcards.db-journal
+flashcards.db-wal
+flashcards.db-shm
+
+# The settings the operator chose on the Plugin Page, and the file a save
+# writes before it is renamed over them.
+settings.json
+settings.json.next
+
+# The Plugin Release the release build writes.
 release/
-*.db
-*.db-*
+
+# Impeccable's own working files. The approved mock, design.json, DESIGN.md
+# and PRODUCT.md are the UI reference, and they stay in the repository.
 .impeccable/hook.cache.json
 .impeccable/review/
 .impeccable/mocks/decision/

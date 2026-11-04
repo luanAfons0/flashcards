@@ -1,0 +1,19 @@
+{
+  "name": "flashcards",
+  "version": "0.1.0",
+  "description": "A FirstMate Plugin that shows each Card again just before you would forget it, as Anki does.",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node --test",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "^7.0.2"
+  }
+}
