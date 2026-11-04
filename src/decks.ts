@@ -8,10 +8,10 @@
  * for today, the Daily Limit applied, and
  * `count_deck` and `delete_deck` count and delete one Deck with all it holds.
  */
-import { IS_NEW, NEW_STATE } from './cards.ts';
+import { NEW_STATE } from './cards.ts';
 import { deckKey } from './deck-key.ts';
 import { badInput } from './mcp.ts';
-import { reviewQueue } from './review.ts';
+import { nextDue, reviewQueue } from './review.ts';
 import type { Store } from './store.ts';
 
 /** One Deck with what it holds and what it has for today. */
@@ -25,7 +25,11 @@ export type DeckSummary = {
   readonly new: number;
   /** How many of its Cards Due now a Review of every Deck shows today, the Daily Limit applied. */
   readonly due: number;
-  /** When its next Card that is not Due yet becomes Due, or null when none is waiting. */
+  /**
+   * When its next Card that a Review cannot show now becomes Due, or null
+   * when none is waiting: 4:00 the next day at the latest while the Daily
+   * Limit holds a Due Card back.
+   */
   readonly nextDue: string | null;
   /**
    * How many Cards a Review of this Deck alone shows now: what the Daily
@@ -68,15 +72,14 @@ export function summaries(store: Store, now: Date): readonly DeckSummary[] {
     .prepare(
       `SELECT decks.id AS id, decks.name AS name,
               COUNT(DISTINCT notes.id) AS notes,
-              COUNT(cards.id) AS cards,
-              MIN(CASE WHEN NOT (${IS_NEW}) AND cards.due > :now THEN cards.due END) AS nextDue
+              COUNT(cards.id) AS cards
          FROM decks
          LEFT JOIN notes ON notes.deck_id = decks.id
          LEFT JOIN cards ON cards.note_id = notes.id
         GROUP BY decks.id
         ORDER BY decks.name COLLATE NOCASE`,
     )
-    .all({ now: now.toISOString() }) as (Omit<DeckSummary, 'new' | 'due' | 'left'> & { id: number })[];
+    .all() as (Omit<DeckSummary, 'new' | 'due' | 'left' | 'nextDue'> & { id: number })[];
   const at = now.toISOString();
   const shown = reviewQueue(store, { deckId: null }, now);
   return rows.map(({ id, ...row }) => ({
@@ -85,7 +88,7 @@ export function summaries(store: Store, now: Date): readonly DeckSummary[] {
     cards: row.cards,
     new: shown.filter((card) => card.deck === row.name && card.state === NEW_STATE).length,
     due: shown.filter((card) => card.deck === row.name && card.state !== NEW_STATE && card.due <= at).length,
-    nextDue: row.nextDue,
+    nextDue: nextDue(store, { deckId: id }, now),
     left: reviewQueue(store, { deckId: id }, now).length,
   }));
 }

@@ -21,6 +21,7 @@
  */
 import { NEW_STATE } from './cards.ts';
 import { capped, reviewsToday } from './daily-limit.ts';
+import { dayStart } from './day.ts';
 import { badInput } from './mcp.ts';
 import { noteTypeOf, type Fields } from './note-types.ts';
 import { graded, intervalText, previewed, STATE_COLUMNS, type CardState } from './schedule.ts';
@@ -152,7 +153,13 @@ function shown(card: QueuedCard, now: Date): ShownCard {
   };
 }
 
-function nextDue(store: Store, scope: Scope, now: Date): string | null {
+/**
+ * When the next Card in this scope that a Review cannot show now becomes
+ * Due, or null when none is waiting. That is the soonest Card not Due yet,
+ * or 4:00 the next day when the Daily Limit holds back a Card Due now,
+ * whichever comes first. New Cards are never Due, so they are not counted.
+ */
+export function nextDue(store: Store, scope: Scope, now: Date): string | null {
   const row = store
     .prepare(
       `SELECT MIN(cards.due) AS due
@@ -161,7 +168,16 @@ function nextDue(store: Store, scope: Scope, now: Date): string | null {
         WHERE cards.state <> ${NEW_STATE} AND cards.due > :now AND (:deck IS NULL OR notes.deck_id = :deck)`,
     )
     .get({ now: now.toISOString(), deck: scope.deckId }) as { due: string | null };
-  return row.due;
+  const at = now.toISOString();
+  // The Due Cards walk the limit first, as in `reviewQueue`, so capping them
+  // alone keeps the same ones.
+  const due = [
+    ...group(store, scope, `${LEARNING} AND cards.due <= :at`, 'cards.due, cards.id', { at }),
+    ...group(store, scope, `cards.state = 2 AND cards.due <= :at`, 'cards.due, cards.id', { at }),
+  ];
+  if (capped(store, due, now).length === due.length) return row.due;
+  const tomorrow = dayStart(now, 1).toISOString();
+  return row.due !== null && row.due < tomorrow ? row.due : tomorrow;
 }
 
 // Undo: a Review keeps the Card's whole state from before its Grade, so
