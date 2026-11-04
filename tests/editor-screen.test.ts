@@ -35,6 +35,7 @@ const tagsMarkup = page['tagsMarkup'] as (tags: string[]) => string;
 const saveCall = page['saveCall'] as (note: Note | null, draft: Draft) => Call;
 const editorHeading = page['editorHeading'] as (note: Note | null) => string;
 const deckOptions = page['deckOptions'] as (decks: { name: string }[]) => string;
+const noteConfirmMarkup = page['noteConfirmMarkup'] as (note: { cards: { reviews: number }[] }) => string;
 
 /** A value from the vm, in this realm, so deepEqual compares only its data. */
 function here<T>(value: T): T {
@@ -209,6 +210,24 @@ test('Save on a Note that is there changes it with update_note, by its id', () =
   });
 });
 
+test('the Delete Note confirm counts the Cards and Reviews that go with the Note, and offers Keep the Note first', () => {
+  const html = noteConfirmMarkup({ cards: [{ reviews: 3 }, { reviews: 2 }] });
+
+  assert.equal(
+    html,
+    '<div class="confirm-box" role="group" aria-labelledby="del-note-h">' +
+      '<div><h2 id="del-note-h">Delete this Note?</h2>' +
+      '<p class="num">This deletes 2 Cards and 5 Reviews. You cannot undo it.</p></div>' +
+      '<div class="row-tools"><button type="button" class="btn" id="note-keep" data-keep-note>Keep the Note</button>' +
+      '<button type="button" class="btn danger" data-confirm-delete-note><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg>Delete Note</button>' +
+      '</div></div>',
+  );
+});
+
+test('the Delete Note confirm says one Card and one Review in the singular', () => {
+  assert.match(shown(noteConfirmMarkup({ cards: [{ reviews: 1 }] })), /This deletes 1 Card and 1 Review\. You cannot undo it\./);
+});
+
 test('the editor is "Add Note" for a new Note and "Edit Note" for one that is there', () => {
   assert.equal(editorHeading(null), 'Add Note');
   assert.equal(editorHeading({ id: 1, deck: 'd', noteType: 'basic', fields: {}, tags: [] }), 'Edit Note');
@@ -241,6 +260,12 @@ test('the Note editor view holds the mock’s form: Deck, Note Type, Fields, Tag
   assert.match(view, /<label for="tag-new">Tags<\/label>\s*<div class="taginput">[\s\S]*?<input id="tag-new" type="text" placeholder="Add a Tag" autocomplete="off">/);
   assert.match(view, /<span class="help">Fields take Markdown\.<\/span>/);
   assert.match(view, /<button type="button" class="btn ghost" id="editor-cancel">Cancel<\/button>\s*<button type="submit" class="btn primary">Save Note<\/button>/);
+  assert.match(view, /<div class="form-foot" id="editor-foot">/);
+  assert.match(
+    view,
+    /<button type="button" class="btn ghost" id="editor-delete" hidden><svg class="i" aria-hidden="true"><use href="#i-trash"\/><\/svg>Delete Note<\/button>\s*<button type="button" class="btn ghost" id="editor-cancel">/,
+  );
+  assert.match(view, /<div class="note-confirm" id="note-confirm" hidden><\/div>/);
   assert.match(view, /<h2 id="h-preview">Cards this Note makes<\/h2>\s*<div id="preview-cards" class="preview" style="position:static"><\/div>/);
 });
 

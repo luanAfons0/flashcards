@@ -5,7 +5,7 @@
    bytes in node:vm exactly as the browser gets them. app.js puts what they
    make on the page. It needs markdown.js (renderMarkdown), cloze.js
    (clozeGaps, clozeQuestion, clozeAnswer, CLOZE_NO_GAP) and decks.js
-   (escapeHtml) loaded before it.
+   (escapeHtml, counted) loaded before it.
 
    The preview asks and answers each Card with the same rules the Plugin
    Server gives the Review, from the one Cloze rule in cloze.js, and renders
@@ -151,4 +151,20 @@ function saveCall(note, draft) {
 function lockedNoteTypes(note) {
   if (!note) return [];
   return note.noteType === 'cloze' ? ['basic', 'reversed'] : ['cloze'];
+}
+
+/**
+ * The confirm that takes the place of the editor's foot before a Note is
+ * deleted, from what get_note answers: the Cards and Reviews that go with it.
+ * "Keep the Note" comes first, and note-editor.js focuses it, so Enter keeps.
+ */
+function noteConfirmMarkup(note) {
+  const reviews = note.cards.reduce((sum, card) => sum + card.reviews, 0);
+  return '<div class="confirm-box" role="group" aria-labelledby="del-note-h">' +
+    '<div><h2 id="del-note-h">Delete this Note?</h2>' +
+    '<p class="num">This deletes ' + counted(note.cards.length, 'Card', 'Cards') + ' and ' + counted(reviews, 'Review', 'Reviews') +
+    '. You cannot undo it.</p></div>' +
+    '<div class="row-tools"><button type="button" class="btn" id="note-keep" data-keep-note>Keep the Note</button>' +
+    '<button type="button" class="btn danger" data-confirm-delete-note><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg>Delete Note</button>' +
+    '</div></div>';
 }

@@ -297,6 +297,8 @@ textarea.code { font: 14px/1.6 var(--mono); }
 .row2 { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: end; }
 .form-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 4px; }
 .form-foot .row-tools { display: flex; gap: 8px; }
+/* The Delete Note confirm, washed as the Delete Deck confirm row is. */
+.note-confirm { background: var(--danger-soft); border-radius: var(--r); padding: 18px 16px; }
 .taginput { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 5px 6px; min-height: 36px; border: 1px solid var(--rule-2); border-radius: var(--r); background: var(--stock); }
 .taginput:focus-within { outline: 2px solid var(--ink); border-color: var(--ink); }
 .taginput .tag { display: inline-flex; gap: 4px; align-items: center; font-size: 13px; padding: 2px 4px 2px 8px; }
@@ -368,7 +370,7 @@ textarea.code { font: 14px/1.6 var(--mono); }
 .review .btn, .review .btn:active, .review .grade { transition: none; transform: none; }
 .popup .btn, .popup .btn:active, .popup .grade { transition: none; transform: none; }
 /* Rare state changes fade in; frequent ones never move. */
-tr.confirm td, .saved { transition: opacity .15s var(--ease); @starting-style { opacity: 0; } }
+tr.confirm td, .note-confirm, .saved { transition: opacity .15s var(--ease); @starting-style { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .btn, .btn:active { transform: none !important; transition: background .15s ease; }
 }

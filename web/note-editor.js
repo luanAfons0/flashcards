@@ -16,15 +16,22 @@
    Save refuses a Cloze with no gap here, inline, before any call. A Deck
    name no Deck has makes that Deck on Save. Ctrl+Enter saves from any field;
    Cancel, and a Save that went through, go back to the view the editor was
-   opened from (the Notes, when there is none). */
+   opened from (the Notes, when there is none).
+
+   Editing a Note also offers Delete Note. It asks get_note what the Note
+   holds now, and the confirm takes the foot's place with "Keep the Note"
+   focused, so Enter keeps, as the Delete Deck confirm does on the Decks.
+   Keep the Note, or Esc, puts the foot back; Delete Note in the confirm calls
+   delete_note and goes back as a Save does. */
 'use strict';
 
 /**
  * The open editor, or null: the address it opened at, the Note it edits (null
  * for a new one), its Note Type, every Field typed so far by name (so
  * switching Note Type keeps Front and Back), its Tags, whether its Cloze
- * error shows, where Cancel goes, and whether a Save is on its way, so a
- * second Save before it answers makes no second Note.
+ * error shows, where Cancel goes, whether a Save or a delete is on its way,
+ * so a second press before it answers does it no second time, and whether
+ * the Delete Note confirm is open.
  */
 let editor = null;
 
@@ -53,9 +60,12 @@ async function drawEditor(note) {
     tags: note ? note.tags.slice() : [],
     faulty: false,
     saving: false,
+    confirming: false,
     back: addressBefore !== null && !isEditorAddress(addressBefore) ? addressBefore || '#decks' : '#notes',
   };
   byId('h-editor').textContent = editorHeading(editor.note);
+  byId('editor-delete').hidden = editor.note === null;
+  closeNoteConfirm();
   byId('ed-deck').value = note ? note.deck : known ? lastSaved.deck : listed.decks.length > 0 ? listed.decks[0].name : '';
   const locked = lockedNoteTypes(editor.note);
   for (const radio of byId('note-form').querySelectorAll('input[name="ntype"]')) {
@@ -125,7 +135,7 @@ function clearClozeError() {
 /** Save the Note, or show why it cannot be; a saved Note goes back to where the editor was opened from. */
 async function saveNote(event) {
   event.preventDefault();
-  if (editor === null || editor.saving) return;
+  if (editor === null || editor.saving || editor.confirming) return;
   keepFields();
   addTypedTags();
   if (noteProblem(editor.noteType, editor.values) !== '') {
@@ -158,10 +168,68 @@ function cancelEditor() {
   location.hash = back;
 }
 
+/** Take the Delete Note confirm away and show the foot again. */
+function closeNoteConfirm() {
+  byId('note-confirm').hidden = true;
+  byId('note-confirm').innerHTML = '';
+  byId('editor-foot').hidden = false;
+  if (editor !== null) editor.confirming = false;
+}
+
+/** Put the Delete Note confirm in the foot's place, with what the Note holds now. */
+async function askToDeleteNote() {
+  if (editor === null || editor.note === null) return;
+  const open = editor;
+  const note = await call('get_note', { id: open.note.id });
+  if (editor !== open) return;
+  byId('note-confirm').innerHTML = noteConfirmMarkup(note);
+  byId('note-confirm').hidden = false;
+  byId('editor-foot').hidden = true;
+  open.confirming = true;
+  byId('note-confirm').querySelector('[data-keep-note]').focus();
+}
+
+/** Keep the Note: the foot comes back, focused on Delete Note. */
+function keepNote() {
+  closeNoteConfirm();
+  byId('editor-delete').focus();
+}
+
+/** Delete the Note the editor edits, and go back to where the editor was opened from. */
+async function deleteEditedNote() {
+  if (editor === null || editor.note === null || editor.saving) return;
+  const open = editor;
+  open.saving = true;
+  try {
+    await call('delete_note', { id: open.note.id });
+    const back = open.back;
+    leaveEditor();
+    location.hash = back;
+  } catch (fault) {
+    say(fault.message || String(fault));
+  } finally {
+    open.saving = false;
+  }
+}
+
 /** Wire the editor's form, Fields and Tags to what they do. app.js calls it once, after byId exists. */
 function wireEditor() {
   byId('note-form').addEventListener('submit', saveNote);
   byId('editor-cancel').addEventListener('click', cancelEditor);
+  byId('editor-delete').addEventListener('click', () => {
+    askToDeleteNote().catch((fault) => say(fault.message || String(fault)));
+  });
+  byId('note-confirm').addEventListener('click', (event) => {
+    const target = event.target.closest('[data-keep-note], [data-confirm-delete-note]');
+    if (target === null) return;
+    if (target.hasAttribute('data-keep-note')) keepNote();
+    else deleteEditedNote();
+  });
+  byId('note-confirm').addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || editor === null || !editor.confirming) return;
+    event.preventDefault();
+    keepNote();
+  });
   byId('note-form').addEventListener('change', (event) => {
     if (event.target.name !== 'ntype' || editor === null) return;
     keepFields();

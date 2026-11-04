@@ -194,7 +194,7 @@ A near-monochrome ink-and-stock palette with one functional accent and one alarm
 - **Firm Rule** (rule-2): control borders: buttons, inputs, the Grade row, chips, key caps.
 
 ### Tertiary
-- **Alarm Red** (danger) and **Alarm Wash** (danger-soft): only the destructive path. The Delete Deck confirm row is washed in danger-soft, its heading is danger, and its confirm button is filled danger. Invalid fields take a danger border and a danger message.
+- **Alarm Red** (danger) and **Alarm Wash** (danger-soft): only the destructive path. The Delete Deck confirm row and the Delete Note confirm are washed in danger-soft, their heading is danger, and their confirm button is filled danger. Invalid fields take a danger border and a danger message.
 
 ### Named Rules
 **The One Band Rule.** The band marks Due and nothing else. A Deck with 0 Due shows a faint 0 in a plain cell. Grades, buttons, links and progress never borrow the band.
@@ -263,7 +263,7 @@ Printed and plain: one shape everywhere, ink for the primary action.
 - **Primary:** ink fill, stock text. Hover (fine pointers only) moves to ink-2.
 - **Secondary:** stock fill, firm-rule border. Hover fills with press.
 - **Ghost:** no border or fill, ink-2 text; hover fills with press and darkens to ink. Used for row actions, Undo and Back.
-- **Danger:** danger fill, used only to confirm Delete Deck.
+- **Danger:** danger fill, used only to confirm Delete Deck or Delete Note.
 - **Icon:** 34px square ghost button with a 16px inline SVG icon and an aria-label.
 - **Active:** a slight press to 98% scale; disabled is sunk with faint text and no press. Reduced motion removes the scale.
 - **Focus:** 2px ink outline, 2px offset.

@@ -154,13 +154,17 @@
                 <input id="tag-new" type="text" placeholder="Add a Tag" autocomplete="off">
               </div>
             </div>
-            <div class="form-foot">
+            <div class="form-foot" id="editor-foot">
               <span class="help">Fields take Markdown.</span>
               <div class="row-tools">
+                <!-- Only when the editor edits a Note that is there. -->
+                <button type="button" class="btn ghost" id="editor-delete" hidden><svg class="i" aria-hidden="true"><use href="#i-trash"/></svg>Delete Note</button>
                 <button type="button" class="btn ghost" id="editor-cancel">Cancel</button>
                 <button type="submit" class="btn primary">Save Note</button>
               </div>
             </div>
+            <!-- The Delete Note confirm takes the foot's place. -->
+            <div class="note-confirm" id="note-confirm" hidden></div>
           </form>
           <aside class="preview" aria-labelledby="h-preview">
             <h2 id="h-preview">Cards this Note makes</h2>
