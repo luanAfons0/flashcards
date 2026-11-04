@@ -61,7 +61,23 @@ async function show() {
  * total, and the today line. With no Deck yet, it says how one appears.
  */
 async function drawDecks() {
-  const listed = await call('list_decks');
+  paintDecks(await call('list_decks'));
+}
+
+/** What the Decks view shows for this list_decks answer, as one string. */
+function decksShownFor(listed) {
+  return JSON.stringify([
+    listed.decks.map((deck) => deckRow(deck, listed.now)).join(''),
+    totalDue(listed.decks),
+    todayLine(listed.today, listed.limit),
+  ]);
+}
+
+/** What the Decks view shows now, from decksShownFor, or null before it is drawn. */
+let decksShown = null;
+
+/** Draw the Decks view from this list_decks answer. */
+function paintDecks(listed) {
   const some = listed.decks.length > 0;
   byId('decks-empty').hidden = some;
   byId('decks-sheet').hidden = !some;
@@ -69,7 +85,26 @@ async function drawDecks() {
   byId('study-total').textContent = String(totalDue(listed.decks));
   byId('deck-rows').innerHTML = listed.decks.map((deck) => deckRow(deck, listed.now)).join('');
   byId('today-line').textContent = todayLine(listed.today, listed.limit);
+  decksShown = decksShownFor(listed);
   confirming = null;
+}
+
+/**
+ * The window gained focus: the Popup may have given Grades since, so the
+ * Decks view asks again and draws again only when what it shows changed.
+ * Nothing else draws again. Drawing replaces the elements, so the click that
+ * brought the window back would land on one that is gone; a Review, the
+ * Note editor and an open Delete confirm each carry on as they are.
+ */
+async function refreshDecks() {
+  const showing = () => routeOf(location.hash) === ROUTES.decks && confirming === null;
+  if (!showing()) return;
+  try {
+    const listed = await call('list_decks');
+    if (showing() && decksShownFor(listed) !== decksShown) paintDecks(listed);
+  } catch (fault) {
+    say(fault.message || String(fault));
+  }
 }
 
 /* Deleting a Deck. Its row's Delete button asks count_deck what the Deck
@@ -182,7 +217,7 @@ function say(sentence) {
 }
 
 window.addEventListener('hashchange', show);
-// The Page and the Popup can both be open. Coming back to one draws it again,
-// so it never shows what the other has since changed.
-window.addEventListener('focus', show);
+// The Page and the Popup can both be open. Coming back to the Page shows on
+// the Decks what the Popup has since changed.
+window.addEventListener('focus', refreshDecks);
 show();
