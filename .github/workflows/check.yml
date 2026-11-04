@@ -1,7 +1,8 @@
 # The one command the README names, run by a machine on every change.
 #
 # There is no build step, because Node 24 runs the TypeScript directly and
-# ships node:sqlite. Every test spawns the real Plugin Server against a
+# ships node:sqlite. The one build, of the Plugin Release, runs inside the
+# release test. Every test spawns the real Plugin Server against a
 # temporary Plugin directory, with the testing clock fixed, or reads web/ off
 # disk, so nothing here needs a Host, a network or a running FirstMate. It
 # runs on Linux and on Windows, the two systems the FirstMate App runs a
