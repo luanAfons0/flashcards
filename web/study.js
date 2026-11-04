@@ -11,7 +11,12 @@
 
    Keys: Space shows the answer, 1 to 4 give Again, Hard, Good or Easy, Esc
    leaves, Z undoes. After the answer shows, focus is on Good, so Enter never
-   gives Again by accident. */
+   gives Again by accident, and Space is taken and does nothing, so it never
+   presses Good; a held Space shows one answer only.
+
+   Each Review has its own number, `round`. An answer that lands after its
+   Review ended, as a Grade sent just before Esc, changes nothing in the
+   Review shown now. */
 'use strict';
 
 /**
@@ -20,7 +25,12 @@
  * compact Review of the Popup. `reviews` holds the id of each Review it made,
  * beside its Grade in `marks`, for Undo.
  */
-const studying = { deck: null, next: null, shown: false, marks: [], reviews: [], busy: false, hooks: null };
+const studying = { deck: null, next: null, shown: false, marks: [], reviews: [], busy: false, hooks: null, round: 0 };
+
+/** Whether the Review numbered `round` is still the one under way. */
+function stillOn(round) {
+  return studying.hooks !== null && studying.round === round;
+}
 
 /**
  * Start a Review of every Deck (deck null) or of the one named, or carry on
@@ -33,6 +43,8 @@ async function startReview(deck, hooks) {
     studying.reviews = [];
     studying.shown = false;
     studying.next = null;
+    studying.busy = false;
+    studying.round += 1;
   }
   studying.deck = deck;
   studying.hooks = hooks;
@@ -46,6 +58,9 @@ function endReview() {
   studying.shown = false;
   studying.marks = [];
   studying.reviews = [];
+  studying.busy = false;
+  studying.round += 1;
+  byId('review-main').innerHTML = '';
 }
 
 /** Leave the Review: end it, and go where the page goes back to. */
@@ -57,9 +72,10 @@ function leaveReview() {
 
 /** Ask for the Card that comes next, and show it. The same Card keeps its answer shown. */
 async function showNext() {
+  const round = studying.round;
   const before = studying.next !== null && studying.next.card !== null ? studying.next.card.id : null;
   const next = await call('next_card', studying.deck === null ? {} : { deck: studying.deck });
-  if (studying.hooks === null) return;
+  if (!stillOn(round)) return;
   studying.shown = studying.shown && next.card !== null && next.card.id === before;
   studying.next = next;
   drawReview();
@@ -101,17 +117,19 @@ function revealAnswer() {
 /** Give the Card its Grade, 1 to 4, then show the next Card at once. */
 async function gradeShown(grade) {
   if (!studying.shown || studying.busy || studying.next === null || studying.next.card === null) return;
+  const round = studying.round;
   studying.busy = true;
   try {
     const graded = await call('grade_card', { card: studying.next.card.id, grade: grade });
+    if (!stillOn(round)) return;
     studying.marks.push(grade);
     studying.reviews.push(graded.review);
     studying.shown = false;
     await showNext();
   } catch (fault) {
-    if (studying.hooks !== null) studying.hooks.say(fault.message || String(fault));
+    if (stillOn(round)) studying.hooks.say(fault.message || String(fault));
   } finally {
-    studying.busy = false;
+    if (studying.round === round) studying.busy = false;
   }
 }
 
@@ -122,11 +140,12 @@ async function gradeShown(grade) {
  */
 async function undoLast() {
   if (studying.busy || studying.reviews.length === 0) return;
+  const round = studying.round;
   studying.busy = true;
   try {
     const review = studying.reviews[studying.reviews.length - 1];
     const next = await call('undo_grade', studying.deck === null ? { review: review } : { review: review, deck: studying.deck });
-    if (studying.hooks === null) return;
+    if (!stillOn(round)) return;
     studying.reviews.pop();
     studying.marks.pop();
     studying.next = next;
@@ -134,9 +153,9 @@ async function undoLast() {
     drawReview();
     focusOn('[data-grade="3"]');
   } catch (fault) {
-    if (studying.hooks !== null) studying.hooks.say(fault.message || String(fault));
+    if (stillOn(round)) studying.hooks.say(fault.message || String(fault));
   } finally {
-    studying.busy = false;
+    if (studying.round === round) studying.busy = false;
   }
 }
 
@@ -154,20 +173,24 @@ document.addEventListener('click', (event) => {
 });
 
 document.addEventListener('keydown', (event) => {
-  if (studying.hooks === null || studying.next === null) return;
+  if (studying.hooks === null) return;
   if (event.ctrlKey || event.metaKey || event.altKey) return;
   if (event.target.closest('input, textarea, select')) return;
-  if (event.key === ' ' && !studying.shown) {
+  // Esc leaves even when no Card came, as when next_card failed.
+  if (event.key === 'Escape') {
     event.preventDefault();
-    revealAnswer();
+    leaveReview();
+    return;
+  }
+  if (studying.next === null) return;
+  if (event.key === ' ') {
+    event.preventDefault();
+    if (!event.repeat) revealAnswer();
   } else if (/^[1-4]$/.test(event.key)) {
     event.preventDefault();
     gradeShown(Number(event.key));
   } else if (event.key === 'z' || event.key === 'Z') {
     event.preventDefault();
     undoLast();
-  } else if (event.key === 'Escape') {
-    event.preventDefault();
-    leaveReview();
   }
 });
