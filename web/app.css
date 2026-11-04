@@ -217,6 +217,33 @@ tr.confirm td { background: var(--danger-soft); padding: 18px 16px; }
 .done-box { background: var(--stock); border: 1px solid var(--rule); border-radius: var(--r-label); padding: 40px 32px; display: grid; gap: 10px; text-align: center; justify-items: center; }
 .done-box h2 { font-size: 19px; }
 
+/* The Popup: the Review alone, in the mock's compact layout. The mock draws it as a 420 by 560
+   window; here the Host's window is the frame and casts the shadow, so the page fills it, at
+   whatever size it is. */
+body.pop { height: 100vh; overflow: hidden; }
+.pop-frame { height: 100%; display: flex; flex-direction: column; padding: 0; }
+.pop .banner { max-width: none; margin: 12px 14px 0; flex: none; }
+.popup {
+  flex: 1; min-height: 0; width: 100%; height: 100%; background: var(--ground);
+  display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; overflow: hidden;
+}
+.popup.done { grid-template-rows: auto minmax(0, 1fr) auto; }
+.popup .ptop { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px 8px; font-size: 13px; }
+.popup .ptop .who { font-weight: 650; }
+.popup .strip { margin: 0 14px; height: 6px; }
+.popup .pbody { padding: 14px; display: grid; min-height: 0; }
+.popup .card { min-height: 0; height: 100%; box-shadow: none; grid-template-rows: auto minmax(0, 1fr); }
+.popup .card-body { padding: 20px 16px; gap: 14px; overflow-y: auto; }
+.popup .front.jp { font-size: 44px; }
+.popup .answer { padding-top: 14px; }
+.popup .answer .main { font-size: 17px; }
+.popup .answer .extra { font-size: 14px; }
+.popup .pfoot { padding: 0 14px 14px; display: grid; gap: 8px; }
+.popup .grade { min-height: 56px; padding: 8px 4px 7px; }
+.popup .grade b { font-size: 14px; }
+.popup .under { font-size: 12px; }
+.popup .done-box { align-content: center; padding: 28px 20px; }
+
 /* Forms. Label above, help below. */
 .field { display: grid; gap: 6px; }
 .field > label, .field > .lbl { font-weight: 600; font-size: 14px; }
@@ -336,6 +363,7 @@ textarea.code { font: 14px/1.6 var(--mono); }
 .card-body pre { white-space: pre-wrap; }
 /* No motion in the Review: the next Card replaces the last at once, and a Grade never moves. */
 .review .btn, .review .btn:active, .review .grade { transition: none; transform: none; }
+.popup .btn, .popup .btn:active, .popup .grade { transition: none; transform: none; }
 /* Rare state changes fade in; frequent ones never move. */
 tr.confirm td, .saved { transition: opacity .15s var(--ease); @starting-style { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {

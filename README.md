@@ -87,6 +87,21 @@ a whole number from 0 to 9999. `get_settings` reads it back. A day starts at
 back the same day without counting again. `list_decks`, the Review and
 `remind_due` count with the limit applied.
 
+## Review from a Popup
+
+`web/popup.html` is the Popup: the same Review as the Plugin Page, in a small
+window, over every Deck. A Plugin cannot bind a Shortcut, so bind one to it
+yourself with `firstmate bind <keys> flashcards popup.html`, for example:
+
+```sh
+firstmate bind Ctrl+Alt+F flashcards popup.html
+```
+
+Press the Shortcut anywhere on the desktop to show it. Space shows the answer,
+1 to 4 give the Grade, Z undoes, and Esc hides it. It also hides when it loses
+focus. Every Grade is saved the moment you give it, so hiding the Popup loses
+nothing.
+
 ## What it needs
 
 Node 24 or newer, for TypeScript with no build step and for `node:sqlite`. The

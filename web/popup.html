@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>flashcards</title>
+<!-- Inline, so a browser asks the Host for no favicon.ico it does not serve. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='1.5' y='3' width='13' height='10' rx='1.5' fill='%2314171a'/%3E%3Crect x='9' y='3' width='5.5' height='10' fill='%230b6e6e'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="app.css">
+</head>
+<body class="pop">
+<!-- The Popup, a second page beside the Plugin Page, served by the Host byte for
+     byte. The operator binds it with firstmate bind <keys> flashcards popup.html,
+     and the Host shows it in a small window of its own. It holds only the Review,
+     drawn compact; it has no top bar and no link, because a link here only hides
+     it. Every path here is relative to it. -->
+<svg class="sr" aria-hidden="true">
+  <symbol id="i-undo" viewBox="0 0 256 256"><path d="M136,80v43.47l36.12,21.67a8,8,0,0,1-8.24,13.72l-40-24A8,8,0,0,1,120,128V80a8,8,0,0,1,16,0Zm-8-48A95.44,95.44,0,0,0,60.08,60.15C52.81,67.51,46.35,74.59,40,82V64a8,8,0,0,0-16,0v40a8,8,0,0,0,8,8H72a8,8,0,0,0,0-16H49c7.15-8.42,14.27-16.350,22.39-24.57a80,80,0,1,1,1.66,114.75,8,8,0,1,0-11,11.64A96,96,0,1,0,128,32Z"/></symbol>
+</svg>
+
+<main class="pop-frame">
+  <h1 id="h-review" class="sr">Review</h1>
+  <p class="banner" id="banner" role="alert" hidden></p>
+  <div class="popup" id="review-main"></div>
+  <div class="popup done" id="review-done" hidden>
+    <div class="ptop"><span class="who">flashcards</span></div>
+    <div class="pbody">
+      <div class="done-box">
+        <h2 id="h-done">Nothing Due</h2>
+        <p class="quiet num" id="done-line"></p>
+      </div>
+    </div>
+    <div class="pfoot"><div class="under"><span>Esc closes</span></div></div>
+  </div>
+</main>
+
+<script src="rpc.js"></script>
+<script src="markdown.js"></script>
+<script src="decks.js"></script>
+<script src="review.js"></script>
+<script src="study.js"></script>
+<script src="popup.js"></script>
+</body>
+</html>
